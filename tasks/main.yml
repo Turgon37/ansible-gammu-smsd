@@ -1,0 +1,40 @@
+---
+- name: Install the required packages
+  package:
+    name: '{{ item }}'
+    state: installed
+  with_items: '{{ gammu_smsd__packages_name }}'
+  tags: ['gammu-smsd']
+
+- name: Assert required variables
+  assert:
+    that:
+      - gammu_smsd__gammu_connection is defined
+      - gammu_smsd__gammu_device is defined
+      - gammu_smsd__gammu_model is defined
+  tags: ['gammu-smsd']
+
+- name: Install gammurc file
+  template:
+    src: etc/gammurc.j2
+    dest: "{{ gammu_smsd__gammu_file }}"
+    owner: root
+    group: root
+    mode: 0644
+  tags: ['gammu-smsd', 'config']
+  
+- name: "Send a test SMS to {{ gammu_smsd__gammu_test_sms_number }}"
+  shell: "echo '[Ansible] test message from {{ ansible_fqdn }}' | gammu --config {{ gammu_smsd__gammu_file }} sendsms TEXT {{ gammu_smsd__gammu_test_sms_number }}"
+  check_mode: no
+  when: gammu_smsd__gammu_test_sms_number is defined
+  tags: ['gammu-smsd', 'config', 'tests']
+
+#- name: Install custom hosts file
+  #template:
+    #src: etc/hosts.j2
+    #dest: "{{ hosts__file }}"
+    #owner: root
+    #group: root
+    #mode: 0644
+# notify: ['restart gammu-smsd']
+  #tags: hosts

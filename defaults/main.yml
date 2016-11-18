@@ -1,0 +1,39 @@
+---
+# Gamu SMSD configuration
+# --------------------------------
+
+# List of packages required for Gammu SMSD
+gammu_smsd__packages_name:
+  - gammu-smsd
+  - gammu
+
+## Gammu configuration
+# Gammu configuration file path
+gammu_smsd__gammu_file: '/etc/gammurc'
+
+# If set to a valid phone number, a test SMS will be send to this device
+#gammu_smsd__gammu_test_sms_number:
+
+# The type of connection between the host and the phone
+#gammu_smsd__gammu_connection:
+
+# The /dev/ device to use to access to phone
+#gammu_smsd__gammu_device:
+
+# The model of the phone
+#gammu_smsd__gammu_model:
+
+# When Gammu access the phone, it locks it to prevent other people access
+gammu_smsd__gammu_use_locking: False
+
+# Synchronise the phone time with the host time on boot
+gammu_smsd__gammu_synchronise_time: True
+
+# If this is set to true, the phone will blink when gammu start connection to it
+gammu_smsd__gammu_start_info: True
+
+# The path to the gammu log file
+gammu_smsd__gammu_logfile: '/var/log/gammu.log'
+
+# The debugging level into the gammu log file
+gammu_smsd__gammu_logformat: nothing
