@@ -1,0 +1,6 @@
+---
+gammu_smsd__sqlite_packages_name: 
+  - sqlite3
+  - libdbd-sqlite3
+
+gammu_smsd__smsd_db_sql_sqlite_schema: /usr/share/doc/gammu-smsd/examples/sqlite.sql.gz

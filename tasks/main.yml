@@ -1,4 +1,8 @@
 ---
+- name: Add the OS specific varibles
+  include_vars: "{{ ansible_os_family }}.yml"
+  tags: ['gammu-smsd']
+  
 - name: Install the required packages
   package:
     name: '{{ item }}'
@@ -11,7 +15,7 @@
     that:
       - gammu_smsd__gammu_connection is defined
       - gammu_smsd__gammu_device is defined
-      - gammu_smsd__gammu_model is defined
+      - gammu_smsd__smsd_db_service in ['FILES', 'NULL', 'SQL', 'MYSQL', 'PGSQL', 'DBI']
   tags: ['gammu-smsd']
 
 - name: Install gammurc file
@@ -23,18 +27,44 @@
     mode: 0644
   tags: ['gammu-smsd', 'config']
   
-- name: "Send a test SMS to {{ gammu_smsd__gammu_test_sms_number }}"
-  shell: "echo '[Ansible] test message from {{ ansible_fqdn }}' | gammu --config {{ gammu_smsd__gammu_file }} sendsms TEXT {{ gammu_smsd__gammu_test_sms_number }}"
+- name: Install gammu-smsdrc file
+  template:
+    src: etc/gammu-smsdrc.j2
+    dest: "{{ gammu_smsd__gammusmsd_file }}"
+    owner: root
+    group: root
+    mode: 0644
+  notify: [ 'restart gammu-smsd' ]
+  tags: ['gammu-smsd', 'config']
+
+- name: Initialise sqlite database
+  include: init_sqlite_database.yml
+  when: gammu_smsd__smsd_db_service == 'SQL' and gammu_smsd__smsd_db_sql_driver == 'sqlite3'
+  tags: ['gammu-smsd']
+
+- name: Optionnaly run handlers before tests
+  meta: flush_handlers
+  tags: ['gammu-smsd']
+
+- name: "Send a test SMS to {{ gammu_smsd__test_sms_number }}"
+  shell: "echo '[Ansible] test message from {{ ansible_fqdn }}' | gammu --config {{ gammu_smsd__gammu_file }} sendsms TEXT {{ gammu_smsd__test_sms_number }}"
   check_mode: no
-  when: gammu_smsd__gammu_test_sms_number is defined
+  when: gammu_smsd__test_sms_number is defined and gammu_smsd__mode == 'oneshot'
   tags: ['gammu-smsd', 'config', 'tests']
 
-#- name: Install custom hosts file
-  #template:
-    #src: etc/hosts.j2
-    #dest: "{{ hosts__file }}"
-    #owner: root
-    #group: root
-    #mode: 0644
-# notify: ['restart gammu-smsd']
-  #tags: hosts
+- name: "Send a test SMS to {{ gammu_smsd__test_sms_number }}"
+  shell: "echo '[Ansible] test message from {{ ansible_fqdn }}' | gammu-smsd-inject TEXT {{ gammu_smsd__test_sms_number }}"
+  become_user: gammu
+  check_mode: no
+  when: gammu_smsd__test_sms_number is defined and gammu_smsd__mode == 'daemon'
+  tags: ['gammu-smsd', 'config', 'tests']
+
+- name: Enable Gammu SMSD daemon at boot
+  service:
+    name: '{{ gammu_smsd__service_name }}'
+    enabled: yes
+  when: gammu_smsd__mode == 'daemon'
+  tags: ['gammu-smsd']
+
+# Run periodic Gammu SMSD hooks
+#*/10 *  * * *   gammu (date --rfc-3339=ns; /usr/bin/gammu-smsd-monitor --use-log -C --loops 1) > /var/spool/gammu/phones/status

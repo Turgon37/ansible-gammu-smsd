@@ -1,0 +1,155 @@
+# 
+# {{ ansible_managed }}
+#
+
+# Configuration file for Gammu SMS Daemon
+
+# Gammu library configuration, see gammurc(5)
+[gammu]
+Device = {{ gammu_smsd__gammu_device }}
+Connection = {{ gammu_smsd__gammu_connection }}
+{% if gammu_smsd__gammu_model is defined %}
+Model = {{ gammu_smsd__gammu_model }}
+{% endif %}
+
+Use_Locking =  {{ gammu_smsd__gammu_use_locking | bool | ternary("yes", "no") }}
+SynchronizeTime = {{ gammu_smsd__gammu_synchronise_time | bool | ternary("yes", "no") }}
+StartInfo = {{ gammu_smsd__gammu_start_info  | bool | ternary("yes", "no") }}
+
+# Log
+LogFile = {{ gammu_smsd__gammu_logfile }}
+LogFormat = {{ gammu_smsd__gammu_logformat }}
+
+###
+### SMSD configuration, see gammu-smsdrc(5)
+###
+[smsd]
+PhoneID = {{ gammu_smsd__smsd_phone_id }}
+{% if gammu_smsd__pincode is defined %}
+PIN = {{ gammu_smsd__pincode }}
+{% endif %}
+{% if gammu_smsd__pincode is defined %}
+PhoneCode = {{ gammu_smsd__phonecode }}
+{% endif %}
+
+Send = {{ gammu_smsd__smsd_send }}
+Receive = {{ gammu_smsd__smsd_receive }}
+
+
+### Log
+LogFile = syslog
+#LogFacility = DAEMON
+
+# Increase for debugging information
+# 1 enables basic debugging information
+# 2 enables logging of SQL queries of service backends
+# 4 enables logging of gammu debug information
+# Generally to get as much debug information as possible, use 255.
+DebugLevel = 1
+
+# Whether delivery reports should be used.
+# log    one line log entry,
+# sms    store in inbox as a received SMS
+# no     no delivery reports
+DeliveryReport = sms
+# Delay in seconds how long is still delivery report considered valid
+DeliveryReportDelay = 600
+
+
+
+### Network settings
+# Number of SMSC
+SMSC = {{ gammu_smsd__smsd_smsc }}
+
+# How many seconds should SMSD wait after there is no message in outbox.
+CommTimeout = 5
+
+# Shows how many seconds SMSD should wait for network
+SendTimeout = 30
+
+# How many times will SMSD try to resend message
+MaxRetries = 2
+
+# The number of seconds between testing for received SMSes
+ReceiveFrequency = 5
+
+
+
+### Hardware
+# The number of seconds between refreshing phone status
+StatusFrequency = {{ gammu_smsd__smsd_hw_frequency }}
+
+# Whether to check if phone wants to enter PIN.
+CheckSecurity = {{ gammu_smsd__smsd_hw_security }}
+
+# Whether to automatically hangup any incoming calls.
+HangupCalls = {{ gammu_smsd__smsd_hw_hangup_calls }}
+
+# Whether to check phone battery state periodically.
+CheckBattery = {{ gammu_smsd__smsd_hw_battery }}
+
+# Whether to check signal level periodically.
+CheckSignal = {{ gammu_smsd__smsd_hw_signal }}
+
+
+### Scripts
+{% if gammu_smsd__smsd_hook_receive is defined %}
+# Executes a program after receiving message.
+RunOnReceive = {{ gammu_smsd__smsd_hook_receive }}
+{% endif %}
+
+{% if gammu_smsd__smsd_hook_failure is defined %}
+# Executes a program on failure.
+RunOnFailure = {{ gammu_smsd__smsd_hook_failure }}
+{% endif %}
+
+{% if gammu_smsd__smsd_hook_sent is defined %}
+# Executes a program after sending message.
+RunOnSent = {{ gammu_smsd__smsd_hook_sent }}
+{% endif %}
+
+
+
+### Backend
+# How many times will SMSD backend retry operation.
+BackendRetries = {{ gammu_smsd__smsd_db_retries }}
+
+Service = {{ gammu_smsd__smsd_db_service }}
+
+{% if gammu_smsd__smsd_db_service == 'FILES' %}
+## Files backend
+# Paths where messages are stored
+InboxPath = {{ gammu_smsd__smsd_db_file_inbox }}
+OutboxPath = {{ gammu_smsd__smsd_db_file_outbox }}
+SentSMSPath = {{ gammu_smsd__smsd_db_file_sent }}
+ErrorSMSPath = {{ gammu_smsd__smsd_db_file_error }}
+
+# Storage format
+#InboxFormat = unicode
+InboxFormat = detail
+OutboxFormat = unicode
+TransmitFormat = unicode
+{% elif gammu_smsd__smsd_db_service == 'SQL' %}
+## SQL backend
+{%   if gammu_smsd__smsd_db_sql_driver is defined %}
+Driver = {{ gammu_smsd__smsd_db_sql_driver }}
+{%   endif %}
+{%   if gammu_smsd__smsd_db_sql_user is defined %}
+User = {{ gammu_smsd__smsd_db_sql_user }}
+{%   endif %}
+{%   if gammu_smsd__smsd_db_sql_password is defined %}
+Password = {{ gammu_smsd__smsd_db_sql_password }}
+{%   endif %}
+{%   if gammu_smsd__smsd_db_sql_host is defined %}
+Host = {{ gammu_smsd__smsd_db_sql_host }}
+{%   endif %}
+{%   if gammu_smsd__smsd_db_sql_database is defined %}
+Database = {{ gammu_smsd__smsd_db_sql_database }}
+{%   endif %}
+{%   if gammu_smsd__smsd_db_sql_driverpath is defined %}
+DriversPath = {{ gammu_smsd__smsd_db_sql_driverpath }}
+{%   endif %}
+{%   if gammu_smsd__smsd_db_sql_dbdir is defined %}
+DBDir = {{ gammu_smsd__smsd_db_sql_dbdir }}
+{%   endif %}
+{% endif %}

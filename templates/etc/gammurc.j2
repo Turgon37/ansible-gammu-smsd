@@ -37,7 +37,9 @@
 [gammu]
 Connection = {{ gammu_smsd__gammu_connection }}
 Device = {{ gammu_smsd__gammu_device }}
+{% if gammu_smsd__gammu_model is defined %}
 Model = {{ gammu_smsd__gammu_model }}
+{% endif %}
 
 Use_Locking =  {{ gammu_smsd__gammu_use_locking | bool | ternary("yes", "no") }}
 SynchronizeTime = {{ gammu_smsd__gammu_synchronise_time | bool | ternary("yes", "no") }}

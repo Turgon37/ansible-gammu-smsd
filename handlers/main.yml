@@ -1,0 +1,6 @@
+---
+- name: restart gammu-smsd
+  service:
+    name: gammu-smsd
+    state: restarted
+  tags: ['gammu-smsd']

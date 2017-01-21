@@ -1,0 +1,20 @@
+---
+- name: Install the sqlite packages
+  package:
+    name: '{{ item }}'
+    state: installed
+  with_items: '{{ gammu_smsd__sqlite_packages_name }}'
+  tags: ['gammu-smsd']
+
+- stat:
+    path: '{{ gammu_smsd__smsd_db_sql_dbdir }}{{ gammu_smsd__smsd_db_sql_database }}'
+  register: db_file
+  tags: ['gammu-smsd']
+
+- shell: "cp {{ gammu_smsd__smsd_db_sql_sqlite_schema }} /tmp/sqlite.sql.gz;
+    gzip -f -d /tmp/sqlite.sql.gz;
+    sqlite3 {{ gammu_smsd__smsd_db_sql_dbdir }}{{ gammu_smsd__smsd_db_sql_database }} < /tmp/sqlite.sql;
+    chown gammu:gammu {{ gammu_smsd__smsd_db_sql_dbdir }}{{ gammu_smsd__smsd_db_sql_database }}"
+  check_mode: no
+  when: db_file.stat.exists == False
+  tags: ['gammu-smsd']

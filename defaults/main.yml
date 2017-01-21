@@ -7,12 +7,20 @@ gammu_smsd__packages_name:
   - gammu-smsd
   - gammu
 
+# In which mode to configure the gammu-smsd role
+# available choices : oneshot  deamon
+gammu_smsd__mode: 'oneshot'
+
 ## Gammu configuration
 # Gammu configuration file path
 gammu_smsd__gammu_file: '/etc/gammurc'
+gammu_smsd__gammusmsd_file: '/etc/gammu-smsdrc'
+
+# The name of the service
+gammu_smsd__service_name: gammu-smsd
 
 # If set to a valid phone number, a test SMS will be send to this device
-#gammu_smsd__gammu_test_sms_number:
+#gammu_smsd__test_sms_number:
 
 # The type of connection between the host and the phone
 #gammu_smsd__gammu_connection:
@@ -37,3 +45,69 @@ gammu_smsd__gammu_logfile: '/var/log/gammu.log'
 
 # The debugging level into the gammu log file
 gammu_smsd__gammu_logformat: nothing
+
+
+
+### SMSD configuration
+## Gammu phone
+gammu_smsd__smsd_phone_id: 1
+#gammu_smsd__pincode: 1234
+#gammu_smsd__phonecode: 1234
+
+## Gammu SMSD features
+gammu_smsd__smsd_send: True
+gammu_smsd__smsd_receive: True
+
+## SMS Center
+gammu_smsd__smsd_smsc: +33000000000
+
+## SMSD Hardware
+# The number of seconds between refreshing phone status
+gammu_smsd__smsd_hw_frequency: 60
+
+# Whether to check if phone wants to enter PIN.
+gammu_smsd__smsd_hw_security: 1
+
+# Whether to automatically hangup any incoming calls.
+gammu_smsd__smsd_hw_hangup_calls: 1
+
+# Whether to check phone battery state periodically.
+gammu_smsd__smsd_hw_battery: 1
+
+# Whether to check signal level periodically.
+gammu_smsd__smsd_hw_signal: 1
+
+
+
+### Hooks scripts
+# Executes a program after receiving message.
+#gammu_smsd__smsd_hook_receive: /opt/script.sh
+
+# Executes a program on failure.
+#gammu_smsd__smsd_hook_failure: /opt/script.sh
+
+# Executes a program after sending message.
+#gammu_smsd__smsd_hook_sent: /opt/script.sh
+
+
+
+### Storage Backend
+gammu_smsd__smsd_db_service: FILES
+gammu_smsd__smsd_db_retries: 5
+
+# FILES
+gammu_smsd__smsd_db_file_inbox: '/var/spool/gammu/inbox/'
+gammu_smsd__smsd_db_file_outbox: '/var/spool/gammu/outbox/'
+gammu_smsd__smsd_db_file_sent: '/var/spool/gammu/sent/'
+gammu_smsd__smsd_db_file_error: '/var/spool/gammu/error/'
+
+# SQL
+#gammu_smsd__smsd_db_sql_driver: native_mysql
+#gammu_smsd__smsd_db_sql_user: smsd
+#gammu_smsd__smsd_db_sql_password: XXXXXXX
+#gammu_smsd__smsd_db_sql_host: mysql.host:3306
+#gammu_smsd__smsd_db_sql_database: smsd
+#gammu_smsd__smsd_db_sql_driverpath: 
+gammu_smsd__smsd_db_sql_dbdir: /var/spool/gammu/
+
+gammu_smsd__smsd_db_sql_sqlite_schema: ''
