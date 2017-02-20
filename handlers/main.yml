@@ -3,4 +3,3 @@
   service:
     name: gammu-smsd
     state: restarted
-  tags: ['gammu-smsd']
