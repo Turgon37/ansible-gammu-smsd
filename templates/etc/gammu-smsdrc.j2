@@ -77,7 +77,13 @@ ReceiveFrequency = 5
 
 ### Hardware
 # The number of seconds between refreshing phone status
-StatusFrequency = {{ gammu_smsd__smsd_hw_frequency }}
+StatusFrequency = {{ gammu_smsd__smsd_hw_status_frequency }}
+
+# The number of seconds between performing a preventive soft reset
+ResetFrequency = {{ gammu_smsd__smsd_hw_softreset_frequency|d(0) }}
+
+# The number of seconds between performing a preventive hard reset
+HardResetFrequency = {{ gammu_smsd__smsd_hw_hardreset_frequency|d(0) }}
 
 # Whether to check if phone wants to enter PIN.
 CheckSecurity = {{ gammu_smsd__smsd_hw_security }}

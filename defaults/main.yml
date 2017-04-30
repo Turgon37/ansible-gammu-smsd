@@ -63,7 +63,7 @@ gammu_smsd__smsd_smsc: +33000000000
 
 ## SMSD Hardware
 # The number of seconds between refreshing phone status
-gammu_smsd__smsd_hw_frequency: 60
+gammu_smsd__smsd_hw_status_frequency: 60
 
 # Whether to check if phone wants to enter PIN.
 gammu_smsd__smsd_hw_security: 1
