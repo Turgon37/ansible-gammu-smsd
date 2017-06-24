@@ -26,7 +26,7 @@
     group: root
     mode: 0644
   tags: ['gammu-smsd', 'config']
-  
+
 - name: Install gammu-smsdrc file
   template:
     src: etc/gammu-smsdrc.j2
@@ -35,6 +35,56 @@
     group: root
     mode: 0644
   notify: [ 'restart gammu-smsd' ]
+  tags: ['gammu-smsd', 'config']
+
+- name: Test gammu log file
+  register: _gammu_smsd__gammu_log
+  check_mode: no
+  stat:
+    path: "{{ gammu_smsd__gammu_logfile }}"
+  when: gammu_smsd__gammu_logfile is defined
+  tags: ['gammu-smsd', 'config']
+
+- name: Init gammu log file
+  file:
+    path: "{{ gammu_smsd__gammu_logfile }}"
+    state: touch
+    owner: "{{ gammu_smsd__user if gammu_smsd__user is defined else omit }}"
+    group: "{{ gammu_smsd__group if gammu_smsd__group is defined else omit }}"
+  when: gammu_smsd__gammu_logfile is defined and (
+    not _gammu_smsd__gammu_log.stat.exists or 
+    (gammu_smsd__user is defined and _gammu_smsd__gammu_log.stat.pw_name != gammu_smsd__user ) or
+    (gammu_smsd__group is defined and _gammu_smsd__gammu_log.stat.gr_name != gammu_smsd__group )
+    )
+  notify: [ 'restart gammu-smsd' ]
+  tags: ['gammu-smsd', 'config']
+
+- name: Test right of serial device
+  register: _gammu_smsd__device
+  check_mode: no
+  stat:
+    path: "{{ gammu_smsd__gammu_device }}"
+  when: gammu_smsd__gammu_device is defined
+  tags: ['gammu-smsd', 'config']
+
+- name: Check the value of the device group
+  fail:
+    msg: "The group of the device file is incorrect"
+  when: gammu_smsd__gammu_device is defined and ( _gammu_smsd__device.stat.gr_name is not defined or _gammu_smsd__device.stat.gr_name | length == 0 )
+  tags: ['gammu-smsd', 'config']
+
+- name: Check the group of the serial device for forbidden groups
+  fail:
+    msg: "The peripheral device {{ gammu_smsd__gammu_device }} is group owned by root"
+  when: gammu_smsd__gammu_device is defined and (_gammu_smsd__device.stat.gr_name == 'root' or _gammu_smsd__device.stat.gid == 0)
+  tags: ['gammu-smsd', 'config']
+
+- name: "Adding '{{ gammu_smsd__user }}' user to device group '{{ _gammu_smsd__device.stat.gr_name }}'"
+  user:
+    name: '{{ gammu_smsd__user }}'
+    groups: '{{ _gammu_smsd__device.stat.gr_name }}'
+    append: yes
+  when: gammu_smsd__gammu_device is defined
   tags: ['gammu-smsd', 'config']
 
 - name: Initialise sqlite database
@@ -65,6 +115,3 @@
   check_mode: no
   when: gammu_smsd__test_sms_number is defined and gammu_smsd__mode == 'daemon'
   tags: ['gammu-smsd', 'config', 'tests']
-
-# Run periodic Gammu SMSD hooks
-#*/10 *  * * *   gammu (date --rfc-3339=ns; /usr/bin/gammu-smsd-monitor --use-log -C --loops 1) > /var/spool/gammu/phones/status

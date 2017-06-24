@@ -11,6 +11,9 @@ gammu_smsd__packages_name:
 # available choices : oneshot  deamon
 gammu_smsd__mode: 'oneshot'
 
+gammu_smsd__user: gammu
+gammu_smsd__group: gammu
+
 ## Gammu configuration
 # Gammu configuration file path
 gammu_smsd__gammu_file: '/etc/gammurc'
@@ -45,6 +48,9 @@ gammu_smsd__gammu_logfile: '/var/log/gammu.log'
 
 # The debugging level into the gammu log file
 gammu_smsd__gammu_logformat: nothing
+
+
+gammu_smsd__daemon_logfile: syslog
 
 
 
