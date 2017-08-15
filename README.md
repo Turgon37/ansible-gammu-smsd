@@ -11,7 +11,7 @@ This role is available for Debian
 
 At this day the role can be used to configure :
 
-  * Gammu cmdline
+  * Gammu cmdline utility
   * Gammu SMSD
 
 
