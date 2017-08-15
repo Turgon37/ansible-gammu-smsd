@@ -11,6 +11,7 @@ gammu_smsd__packages_name:
 # available choices : oneshot  deamon
 gammu_smsd__mode: 'oneshot'
 
+# The user and group gammu will run as
 gammu_smsd__user: gammu
 gammu_smsd__group: gammu
 
@@ -19,11 +20,20 @@ gammu_smsd__group: gammu
 gammu_smsd__gammu_file: '/etc/gammurc'
 gammu_smsd__gammusmsd_file: '/etc/gammu-smsdrc'
 
+# The data directory
+gammu_smsd__gammusmsd_var_dir: '/var/spool/gammu/'
+
+# the crontab file to use for cron jobs
+gammu_smsd__cron_file: /etc/crontab
+
 # The name of the service
 gammu_smsd__service_name: gammu-smsd
 
 # If set to a valid phone number, a test SMS will be send to this device
 #gammu_smsd__test_sms_number:
+
+# Enable the phone monitoring cron
+gammu_smsd__smsd_monitoring_cron: False
 
 # The type of connection between the host and the phone
 #gammu_smsd__gammu_connection:
@@ -48,7 +58,6 @@ gammu_smsd__gammu_logfile: '/var/log/gammu.log'
 
 # The debugging level into the gammu log file
 gammu_smsd__gammu_logformat: nothing
-
 
 gammu_smsd__daemon_logfile: syslog
 
@@ -102,10 +111,10 @@ gammu_smsd__smsd_db_service: FILES
 gammu_smsd__smsd_db_retries: 5
 
 # FILES
-gammu_smsd__smsd_db_file_inbox: '/var/spool/gammu/inbox/'
-gammu_smsd__smsd_db_file_outbox: '/var/spool/gammu/outbox/'
-gammu_smsd__smsd_db_file_sent: '/var/spool/gammu/sent/'
-gammu_smsd__smsd_db_file_error: '/var/spool/gammu/error/'
+gammu_smsd__smsd_db_file_inbox: '{{ gammu_smsd__gammusmsd_var_dir }}inbox/'
+gammu_smsd__smsd_db_file_outbox: '{{ gammu_smsd__gammusmsd_var_dir }}outbox/'
+gammu_smsd__smsd_db_file_sent: '{{ gammu_smsd__gammusmsd_var_dir }}sent/'
+gammu_smsd__smsd_db_file_error: '{{ gammu_smsd__gammusmsd_var_dir }}error/'
 
 # SQL
 #gammu_smsd__smsd_db_sql_driver: native_mysql
@@ -114,6 +123,6 @@ gammu_smsd__smsd_db_file_error: '/var/spool/gammu/error/'
 #gammu_smsd__smsd_db_sql_host: mysql.host:3306
 #gammu_smsd__smsd_db_sql_database: smsd
 #gammu_smsd__smsd_db_sql_driverpath: 
-gammu_smsd__smsd_db_sql_dbdir: /var/spool/gammu/
+gammu_smsd__smsd_db_sql_dbdir: '{{ gammu_smsd__gammusmsd_var_dir }}'
 
 gammu_smsd__smsd_db_sql_sqlite_schema: ''

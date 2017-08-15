@@ -1,5 +1,5 @@
 ---
-- name: restart gammu-smsd
+- name: restart-gammu-smsd
   service:
-    name: gammu-smsd
+    name: '{{ gammu_smsd__service_name }}'
     state: restarted

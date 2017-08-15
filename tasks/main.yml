@@ -34,7 +34,7 @@
     owner: root
     group: root
     mode: 0644
-  notify: [ 'restart gammu-smsd' ]
+  notify: [ 'restart-gammu-smsd' ]
   tags: ['gammu-smsd', 'config']
 
 - name: Test gammu log file
@@ -56,7 +56,7 @@
     (gammu_smsd__user is defined and _gammu_smsd__gammu_log.stat.pw_name != gammu_smsd__user ) or
     (gammu_smsd__group is defined and _gammu_smsd__gammu_log.stat.gr_name != gammu_smsd__group )
     )
-  notify: [ 'restart gammu-smsd' ]
+  notify: [ 'restart-gammu-smsd' ]
   tags: ['gammu-smsd', 'config']
 
 - name: Test right of serial device
@@ -99,19 +99,29 @@
   when: gammu_smsd__mode == 'daemon'
   tags: ['gammu-smsd']
 
-- name: Optionnaly run handlers before tests
-  meta: flush_handlers
+- meta: flush_handlers
   tags: ['gammu-smsd']
 
-- name: "Send a test SMS to {{ gammu_smsd__test_sms_number }}"
+- name: "Send a test SMS via gammu to {{ gammu_smsd__test_sms_number }}"
   shell: "echo '[Ansible] test message from {{ ansible_fqdn }}' | gammu --config {{ gammu_smsd__gammu_file }} sendsms TEXT {{ gammu_smsd__test_sms_number }}"
   check_mode: no
   when: gammu_smsd__test_sms_number is defined and gammu_smsd__mode == 'oneshot'
   tags: ['gammu-smsd', 'config', 'tests']
 
-- name: "Send a test SMS to {{ gammu_smsd__test_sms_number }}"
+- name: "Send a test SMS via gammu-smsd to {{ gammu_smsd__test_sms_number }}"
   shell: "echo '[Ansible] test message from {{ ansible_fqdn }}' | gammu-smsd-inject TEXT {{ gammu_smsd__test_sms_number }}"
   become_user: gammu
   check_mode: no
   when: gammu_smsd__test_sms_number is defined and gammu_smsd__mode == 'daemon'
   tags: ['gammu-smsd', 'config', 'tests']
+
+- name: Configure crontab jobs
+  become: yes
+  cron:
+    name: 'GAMMU-SMSD-PHONE-MONITORING'
+    minute: '*/10'
+    job: '(date --rfc-3339=ns; /usr/bin/gammu-smsd-monitor --use-log -C --loops 1) > {{ gammu_smsd__gammusmsd_var_dir }}phones_status'
+    user: '{{ gammu_smsd__user }}'
+    cron_file: '{{ gammu_smsd__cron_file }}'
+    state: "{{ 'present' if gammu_smsd__smsd_monitoring_cron else 'absent' }}"
+  tags: ['gammu-smsd', 'config']
