@@ -1,0 +1,20 @@
+---
+
+- name: Ensure Gammu SMSD is started and enabled on boot
+  service:
+    name: '{{ gammu_smsd__service_name }}'
+    enabled: '{{ gammu_smsd__deamon_enabled|bool|ternary("yes", "no") }}'
+    state: '{{ gammu_smsd__deamon_enabled|bool|ternary("started", "stopped") }}'
+  when: gammu_smsd__deamon_enabled
+
+- meta: flush_handlers
+
+- name: "Send a test SMS via gammu to {{ gammu_smsd__test_sms_number }}"
+  shell: "echo '[Ansible] test message from {{ ansible_fqdn }}' | gammu --config {{ gammu_smsd__gammu_file }} sendsms TEXT {{ gammu_smsd__test_sms_number }}"
+  become_user: '{{ gammu_smsd__user }}'
+  when: gammu_smsd__test_sms_number is defined and not gammu_smsd__deamon_enabled
+
+- name: "Send a test SMS via gammu-smsd to {{ gammu_smsd__test_sms_number }}"
+  shell: "echo '[Ansible] test message from {{ ansible_fqdn }}' | gammu-smsd-inject TEXT {{ gammu_smsd__test_sms_number }}"
+  become_user: '{{ gammu_smsd__user }}'
+  when: gammu_smsd__test_sms_number is defined and gammu_smsd__deamon_enabled

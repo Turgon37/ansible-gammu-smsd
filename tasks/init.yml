@@ -1,0 +1,8 @@
+---
+
+- name: Assert required variables
+  assert:
+    that:
+      - gammu_smsd__gammu_connection is defined
+      - gammu_smsd__gammu_device is defined
+      - gammu_smsd__smsd_db_service in ['FILES', 'NULL', 'SQL', 'MYSQL', 'PGSQL', 'DBI']

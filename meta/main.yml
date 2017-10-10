@@ -1,0 +1,14 @@
+galaxy_info:
+  author: Pierre GINDRAUD
+  description: This role configure Gammu SMSD
+  license: MIT
+  min_ansible_version: 2.4
+  platforms:
+    - name: Debian
+      versions:
+        - 9
+        - 8
+  galaxy_tags: []
+
+dependencies:
+  - { role: 'apt-backports', when: ansible_distribution_release in ['jessie'] }

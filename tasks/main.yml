@@ -1,127 +1,25 @@
 ---
-- name: Add the OS specific varibles
-  include_vars: "{{ ansible_os_family }}.yml"
-  tags: ['gammu-smsd']
-  
-- name: Install the required packages
-  package:
-    name: '{{ item }}'
-    state: installed
-  with_items: '{{ gammu_smsd__packages_name }}'
-  tags: ['gammu-smsd']
+# tasks file for gammu-smsd
 
-- name: Assert required variables
-  assert:
-    that:
-      - gammu_smsd__gammu_connection is defined
-      - gammu_smsd__gammu_device is defined
-      - gammu_smsd__smsd_db_service in ['FILES', 'NULL', 'SQL', 'MYSQL', 'PGSQL', 'DBI']
-  tags: ['gammu-smsd']
+- name: Include the OS specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - files:
+        - "{{ ansible_distribution }}-{{ ansible_distribution_version }}.yml"
+        - "{{ ansible_distribution }}.yml"
+        - "{{ ansible_os_family }}.yml"
+        - "defaults.yml"
+      skip: true
+  tags: ['always']
 
-- name: Install gammurc file
-  template:
-    src: etc/gammurc.j2
-    dest: "{{ gammu_smsd__gammu_file }}"
-    owner: root
-    group: root
-    mode: 0644
-  tags: ['gammu-smsd', 'config']
+- import_tasks: init.yml
+  tags: ['always']
 
-- name: Install gammu-smsdrc file
-  template:
-    src: etc/gammu-smsdrc.j2
-    dest: "{{ gammu_smsd__gammusmsd_file }}"
-    owner: root
-    group: root
-    mode: 0644
-  notify: [ 'restart-gammu-smsd' ]
-  tags: ['gammu-smsd', 'config']
+- import_tasks: install.yml
+  tags: ['gammu-smsd', 'gammu-smsd-install']
 
-- name: Test gammu log file
-  register: _gammu_smsd__gammu_log
-  check_mode: no
-  stat:
-    path: "{{ gammu_smsd__gammu_logfile }}"
-  when: gammu_smsd__gammu_logfile is defined
-  tags: ['gammu-smsd', 'config']
+- import_tasks: configure.yml
+  tags: ['gammu-smsd', 'gammu-smsd-configure']
 
-- name: Init gammu log file
-  file:
-    path: "{{ gammu_smsd__gammu_logfile }}"
-    state: touch
-    owner: "{{ gammu_smsd__user if gammu_smsd__user is defined else omit }}"
-    group: "{{ gammu_smsd__group if gammu_smsd__group is defined else omit }}"
-  when: gammu_smsd__gammu_logfile is defined and (
-    not _gammu_smsd__gammu_log.stat.exists or 
-    (gammu_smsd__user is defined and _gammu_smsd__gammu_log.stat.pw_name != gammu_smsd__user ) or
-    (gammu_smsd__group is defined and _gammu_smsd__gammu_log.stat.gr_name != gammu_smsd__group )
-    )
-  notify: [ 'restart-gammu-smsd' ]
-  tags: ['gammu-smsd', 'config']
-
-- name: Test right of serial device
-  register: _gammu_smsd__device
-  check_mode: no
-  stat:
-    path: "{{ gammu_smsd__gammu_device }}"
-  when: gammu_smsd__gammu_device is defined
-  tags: ['gammu-smsd', 'config']
-
-- name: Check the value of the device group
-  fail:
-    msg: "The group of the device file is incorrect"
-  when: gammu_smsd__gammu_device is defined and ( _gammu_smsd__device.stat.gr_name is not defined or _gammu_smsd__device.stat.gr_name | length == 0 )
-  tags: ['gammu-smsd', 'config']
-
-- name: Check the group of the serial device for forbidden groups
-  fail:
-    msg: "The peripheral device {{ gammu_smsd__gammu_device }} is group owned by root"
-  when: gammu_smsd__gammu_device is defined and (_gammu_smsd__device.stat.gr_name == 'root' or _gammu_smsd__device.stat.gid == 0)
-  tags: ['gammu-smsd', 'config']
-
-- name: "Adding '{{ gammu_smsd__user }}' user to device group '{{ _gammu_smsd__device.stat.gr_name }}'"
-  user:
-    name: '{{ gammu_smsd__user }}'
-    groups: '{{ _gammu_smsd__device.stat.gr_name }}'
-    append: yes
-  when: gammu_smsd__gammu_device is defined
-  tags: ['gammu-smsd', 'config']
-
-- name: Initialise sqlite database
-  include: init_sqlite_database.yml
-  when: gammu_smsd__smsd_db_service == 'SQL' and gammu_smsd__smsd_db_sql_driver == 'sqlite3'
-  tags: ['gammu-smsd']
-
-- name: Enable Gammu SMSD daemon at boot
-  service:
-    name: '{{ gammu_smsd__service_name }}'
-    enabled: yes
-  when: gammu_smsd__mode == 'daemon'
-  tags: ['gammu-smsd']
-
-- meta: flush_handlers
-  tags: ['gammu-smsd']
-
-- name: "Send a test SMS via gammu to {{ gammu_smsd__test_sms_number }}"
-  shell: "echo '[Ansible] test message from {{ ansible_fqdn }}' | gammu --config {{ gammu_smsd__gammu_file }} sendsms TEXT {{ gammu_smsd__test_sms_number }}"
-  check_mode: no
-  when: gammu_smsd__test_sms_number is defined and gammu_smsd__mode == 'oneshot'
-  tags: ['gammu-smsd', 'config', 'tests']
-
-- name: "Send a test SMS via gammu-smsd to {{ gammu_smsd__test_sms_number }}"
-  shell: "echo '[Ansible] test message from {{ ansible_fqdn }}' | gammu-smsd-inject TEXT {{ gammu_smsd__test_sms_number }}"
-  become_user: gammu
-  check_mode: no
-  when: gammu_smsd__test_sms_number is defined and gammu_smsd__mode == 'daemon'
-  tags: ['gammu-smsd', 'config', 'tests']
-
-- name: Configure crontab jobs
-  become: yes
-  cron:
-    name: 'GAMMU-SMSD-PHONE-MONITORING'
-    minute: '*/10'
-    job: '(date --rfc-3339=ns; /usr/bin/gammu-smsd-monitor --use-log -C --loops 1) > {{ gammu_smsd__gammusmsd_var_dir }}phones_status'
-    user: '{{ gammu_smsd__user }}'
-    cron_file: '{{ gammu_smsd__cron_file }}'
-    state: "{{ 'present' if gammu_smsd__smsd_monitoring_cron else 'absent' }}"
-  tags: ['gammu-smsd', 'config']
+- import_tasks: service.yml
+  tags: ['gammu-smsd', 'gammu-smsd-service']

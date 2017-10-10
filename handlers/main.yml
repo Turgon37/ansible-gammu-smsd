@@ -1,4 +1,6 @@
 ---
+# handlers file for gammu-smsd
+
 - name: restart-gammu-smsd
   service:
     name: '{{ gammu_smsd__service_name }}'

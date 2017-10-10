@@ -1,15 +1,13 @@
 ---
-# Gamu SMSD configuration
-# --------------------------------
+# defaults file for gammu-smsd
+
+# If the daemon must be enabled
+gammu_smsd__deamon_enabled: true
 
 # List of packages required for Gammu SMSD
-gammu_smsd__packages_name:
-  - gammu-smsd
+gammu_smsd__packages_names:
   - gammu
-
-# In which mode to configure the gammu-smsd role
-# available choices : oneshot  deamon
-gammu_smsd__mode: 'oneshot'
+  - gammu-smsd
 
 # The user and group gammu will run as
 gammu_smsd__user: gammu
@@ -17,8 +15,9 @@ gammu_smsd__group: gammu
 
 ## Gammu configuration
 # Gammu configuration file path
-gammu_smsd__gammu_file: '/etc/gammurc'
-gammu_smsd__gammusmsd_file: '/etc/gammu-smsdrc'
+gammu_smsd__gammurc_file: '/etc/gammurc'
+gammu_smsd__gammusmsdrc_file: '/etc/gammu-smsdrc'
+
 
 # The data directory
 gammu_smsd__gammusmsd_var_dir: '/var/spool/gammu/'
@@ -61,6 +60,35 @@ gammu_smsd__gammu_logformat: nothing
 
 gammu_smsd__daemon_logfile: syslog
 
+
+### SMSD configuration
+## Gammu phone
+gammu_smsd__smsd_phone_id: 1
+#gammu_smsd__pincode: 1234
+#gammu_smsd__phonecode: 1234
+
+## Gammu SMSD features
+gammu_smsd__smsd_send: True
+gammu_smsd__smsd_receive: True
+
+## SMS Center
+gammu_smsd__smsd_smsc: +33000000000
+
+## SMSD Hardware
+# The number of seconds between refreshing phone status
+gammu_smsd__smsd_hw_status_frequency: 60
+
+# Whether to check if phone wants to enter PIN.
+gammu_smsd__smsd_hw_security: 1
+
+# Whether to automatically hangup any incoming calls.
+gammu_smsd__smsd_hw_hangup_calls: 1
+
+# Whether to check phone battery state periodically.
+gammu_smsd__smsd_hw_battery: 1
+
+# Whether to check signal level periodically.
+gammu_smsd__smsd_hw_signal: 1
 
 
 ### SMSD configuration
