@@ -91,37 +91,6 @@ gammu_smsd__smsd_hw_battery: 1
 gammu_smsd__smsd_hw_signal: 1
 
 
-### SMSD configuration
-## Gammu phone
-gammu_smsd__smsd_phone_id: 1
-#gammu_smsd__pincode: 1234
-#gammu_smsd__phonecode: 1234
-
-## Gammu SMSD features
-gammu_smsd__smsd_send: True
-gammu_smsd__smsd_receive: True
-
-## SMS Center
-gammu_smsd__smsd_smsc: +33000000000
-
-## SMSD Hardware
-# The number of seconds between refreshing phone status
-gammu_smsd__smsd_hw_status_frequency: 60
-
-# Whether to check if phone wants to enter PIN.
-gammu_smsd__smsd_hw_security: 1
-
-# Whether to automatically hangup any incoming calls.
-gammu_smsd__smsd_hw_hangup_calls: 1
-
-# Whether to check phone battery state periodically.
-gammu_smsd__smsd_hw_battery: 1
-
-# Whether to check signal level periodically.
-gammu_smsd__smsd_hw_signal: 1
-
-
-
 ### Hooks scripts
 # Executes a program after receiving message.
 #gammu_smsd__smsd_hook_receive: /opt/script.sh
