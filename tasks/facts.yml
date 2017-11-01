@@ -10,6 +10,9 @@
 
 - name: Insert custom fact file
   copy:
-    src:  files/dhcpd.py
-    dest: "{{ facts__dir|d('/etc/ansible/facts.d') }}/dhcpd.fact"
+    src:  'files/{{ item }}.py'
+    dest: "{{ facts__dir|d('/etc/ansible/facts.d') }}/{{ item }}.fact"
     mode: 0755
+  with_items:
+    - gammu
+    - gammu_smsd
