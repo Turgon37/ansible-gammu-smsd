@@ -23,3 +23,6 @@
 
 - import_tasks: service.yml
   tags: ['gammu-smsd', 'gammu-smsd-service']
+
+- include_tasks: facts.yml
+  when: gammu_smsd__facts|bool

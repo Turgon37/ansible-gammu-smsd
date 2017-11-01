@@ -1,6 +1,12 @@
 ---
 # defaults file for gammu-smsd
 
+# Simple placeholder to allow other roles to detect this role
+gammu_smsd__role: True
+
+# Enable facts deploiement
+gammu_smsd__facts: True
+
 # If the daemon must be enabled
 gammu_smsd__deamon_enabled: true
 
