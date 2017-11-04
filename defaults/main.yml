@@ -24,7 +24,6 @@ gammu_smsd__group: gammu
 gammu_smsd__gammurc_file: '/etc/gammurc'
 gammu_smsd__gammusmsdrc_file: '/etc/gammu-smsdrc'
 
-
 # The data directory
 gammu_smsd__gammusmsd_var_dir: '/var/spool/gammu/'
 
@@ -33,6 +32,16 @@ gammu_smsd__cron_file: /etc/crontab
 
 # The name of the service
 gammu_smsd__service_name: gammu-smsd
+
+# Path to hostapd binary executable
+gammu_smsd__executable: /usr/bin/gammu-smsd
+# Path to hostapd pidfile
+gammu_smsd__service_pidfile: /var/run/gammu-smsd.pid
+# File that contains environment variables for service unit
+#gammu_smsd__service_environment:
+
+# Set to yes to deploy and override systemd service configuration
+gammu_smsd__service_configure_systemd: False
 
 # If set to a valid phone number, a test SMS will be send to this device
 #gammu_smsd__test_sms_number:

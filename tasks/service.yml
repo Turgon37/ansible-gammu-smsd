@@ -1,10 +1,27 @@
 ---
 
+- name: install gammu-smsd.service systemd unit file
+  template:
+    src:   gammu-smsd.service.j2
+    dest:  '/etc/systemd/system/{{ gammu_smsd__service_name }}.service'
+    owner: root
+    group: root
+    mode:  0755
+  when: gammu_smsd__service_configure_systemd|bool and ansible_service_mgr == 'systemd'
+  register: _gammu_smsd__service
+
+- name: Reload systemd
+  systemd:
+    name:          '{{ gammu_smsd__service_name }}'
+    enabled:       "{{ gammu_smsd__deamon_enabled|bool|ternary('yes', 'no') }}"
+    daemon_reload: yes
+  when: _gammu_smsd__service|changed and ansible_service_mgr == 'systemd'
+
 - name: Ensure Gammu SMSD is started and enabled on boot
   service:
-    name: '{{ gammu_smsd__service_name }}'
+    name:    '{{ gammu_smsd__service_name }}'
     enabled: '{{ gammu_smsd__deamon_enabled|bool|ternary("yes", "no") }}'
-    state: '{{ gammu_smsd__deamon_enabled|bool|ternary("started", "stopped") }}'
+    state:   '{{ gammu_smsd__deamon_enabled|bool|ternary("started", "stopped") }}'
   when: gammu_smsd__deamon_enabled
 
 - meta: flush_handlers
