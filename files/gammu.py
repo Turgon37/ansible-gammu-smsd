@@ -13,8 +13,8 @@ try:
     result = subprocess.Popen(['/usr/bin/env', 'gammu', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     (stdout, stderr) = result.communicate()
     output = stdout + stderr
-    for line in output.split():
-        match = version_re.search(line)
+    for line in output.split('\n'):
+        match = version_re.search(line.strip())
         if match:
             content['version_full'] = match.group('version')
             content['version_major'] = match.group('major')
