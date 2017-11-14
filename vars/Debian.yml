@@ -5,4 +5,4 @@ gammu_smsd__sqlite_packages_name:
 
 gammu_smsd__smsd_db_sql_sqlite_schema: /usr/share/doc/gammu-smsd/examples/sqlite.sql.gz
 
-gammu_smsd__service_environment: /etc/default/hostapd
+gammu_smsd__service_environment: /etc/default/gammu-smsd

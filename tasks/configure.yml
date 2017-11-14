@@ -17,6 +17,16 @@
     mode:  0644
   notify: [ 'restart-gammu-smsd' ]
 
+- name: Install gammu-smsd default configuration file
+  template:
+    src:   default-gammu-smsd.j2
+    dest:  '{{ gammu_smsd__service_environment }}'
+    owner: root
+    group: root
+    mode:  0644
+  when: ansible_distribution == 'Debian'
+  notify: [ 'restart-gammu-smsd' ]
+
 - name: Test gammu log file
   stat:
     path: '{{ gammu_smsd__gammu_logfile }}'
