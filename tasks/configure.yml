@@ -54,15 +54,15 @@
   register: _gammu_smsd__device
   check_mode: no
 
-- name: Check the value of the device group
-  fail:
-    msg: "The group of the device file is incorrect"
-  when: gammu_smsd__gammu_device is defined and ( _gammu_smsd__device.stat.gr_name is not defined or _gammu_smsd__device.stat.gr_name|length == 0 )
+#- name: Check the value of the device group
+  #fail:
+    #msg: "The group of the device file is incorrect"
+  #when: gammu_smsd__gammu_device is defined and ( _gammu_smsd__device.stat.gr_name is not defined or _gammu_smsd__device.stat.gr_name|length == 0 )
 
-- name: Check the group of the serial device for forbidden groups
-  fail:
-    msg: "The peripheral device {{ gammu_smsd__gammu_device }} is group owned by root"
-  when: gammu_smsd__gammu_device is defined and (_gammu_smsd__device.stat.gr_name == 'root' or _gammu_smsd__device.stat.gid == 0)
+#- name: Check the group of the serial device for forbidden groups
+  #fail:
+    #msg: "The peripheral device {{ gammu_smsd__gammu_device }} is group owned by root"
+  #when: gammu_smsd__gammu_device is defined and (_gammu_smsd__device.stat.gr_name == 'root' or _gammu_smsd__device.stat.gid == 0)
 
 - name: "Adding '{{ gammu_smsd__user }}' user to device group '{{ _gammu_smsd__device.stat.gr_name }}'"
   user:
