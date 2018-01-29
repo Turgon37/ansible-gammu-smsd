@@ -1,5 +1,40 @@
 ---
 
+## Peripheral checks
+
+- name: Test right of serial device
+  stat:
+    path: '{{ gammu_smsd__gammu_device }}'
+  when: gammu_smsd__gammu_device is defined
+  register: _gammu_smsd__device
+  check_mode: False
+
+- name: Test right of serial device is previous was symlink
+  stat:
+    path: '{{ _gammu_smsd__device.stat.lnk_source }}'
+  when: gammu_smsd__gammu_device is defined and _gammu_smsd__device.stat.islnk
+  register: _gammu_smsd__device
+  check_mode: False
+
+- name: Check the value of the device group
+  fail:
+    msg: The group of the device file is incorrect
+  when: gammu_smsd__gammu_device is defined and ( _gammu_smsd__device.stat.gr_name is not defined or _gammu_smsd__device.stat.gr_name|length == 0 )
+
+- name: Check the group of the serial device for forbidden groups
+  fail:
+    msg: 'The peripheral device {{ gammu_smsd__gammu_device }} is group owned by root'
+  when: gammu_smsd__gammu_device is defined and (_gammu_smsd__device.stat.gr_name == 'root' or _gammu_smsd__device.stat.gid == 0)
+
+- name: "Adding '{{ gammu_smsd__user }}' user to device group '{{ _gammu_smsd__device.stat.gr_name }}'"
+  user:
+    name: '{{ gammu_smsd__user }}'
+    groups: '{{ _gammu_smsd__device.stat.gr_name }}'
+    append: yes
+  when: gammu_smsd__gammu_device is defined
+
+## Configuration
+
 - name: Install gammurc file
   template:
     src:   gammurc.j2
@@ -32,7 +67,7 @@
     path: '{{ gammu_smsd__gammu_logfile }}'
   when: gammu_smsd__gammu_logfile is defined
   register: _gammu_smsd__gammu_log
-  check_mode: no
+  check_mode: False
 
 - name: Init gammu log file
   file:
@@ -46,30 +81,6 @@
       (gammu_smsd__group is defined and _gammu_smsd__gammu_log.stat.gr_name != gammu_smsd__group )
     )
   notify: [ 'restart-gammu-smsd' ]
-
-- name: Test right of serial device
-  stat:
-    path: '{{ gammu_smsd__gammu_device }}'
-  when: gammu_smsd__gammu_device is defined
-  register: _gammu_smsd__device
-  check_mode: no
-
-- name: Check the value of the device group
-  fail:
-    msg: "The group of the device file is incorrect"
-  when: gammu_smsd__gammu_device is defined and ( _gammu_smsd__device.stat.gr_name is not defined or _gammu_smsd__device.stat.gr_name|length == 0 )
-
-- name: Check the group of the serial device for forbidden groups
-  fail:
-    msg: "The peripheral device {{ gammu_smsd__gammu_device }} is group owned by root"
-  when: gammu_smsd__gammu_device is defined and (_gammu_smsd__device.stat.gr_name == 'root' or _gammu_smsd__device.stat.gid == 0)
-
-- name: "Adding '{{ gammu_smsd__user }}' user to device group '{{ _gammu_smsd__device.stat.gr_name }}'"
-  user:
-    name: '{{ gammu_smsd__user }}'
-    groups: '{{ _gammu_smsd__device.stat.gr_name }}'
-    append: yes
-  when: gammu_smsd__gammu_device is defined
 
 #- name: Initialise sqlite database
   #include: init_sqlite_database.yml
