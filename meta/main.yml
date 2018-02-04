@@ -11,4 +11,4 @@ galaxy_info:
   galaxy_tags: []
 
 dependencies:
-  - { role: 'apt-backports', when: "ansible_distribution_release in ['jessie']" }
+  - { role: 'apt-backports', when: "ansible_distribution_release in ['jessie'] and gammu_smsd__packages_allow_backports|bool" }

@@ -12,6 +12,9 @@ gammu_smsd__packages_names:
   - gammu
   - gammu-smsd
 
+# Try to enable this to get the latest version of USB modeswitch
+gammu_smsd__packages_allow_backports: False
+
 # The user and group gammu will run as
 gammu_smsd__user: gammu
 gammu_smsd__group: gammu

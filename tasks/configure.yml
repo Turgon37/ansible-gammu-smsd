@@ -2,24 +2,31 @@
 
 ## Peripheral checks
 
-- name: Test right of serial device
+- name: Get serial device stats
   stat:
     path: '{{ gammu_smsd__gammu_device }}'
   when: gammu_smsd__gammu_device is defined
   register: _gammu_smsd__device
   check_mode: False
 
-- name: Test right of serial device is previous was symlink
+- name: Get right of serial device is previous was symlink
   stat:
     path: '{{ _gammu_smsd__device.stat.lnk_source }}'
-  when: gammu_smsd__gammu_device is defined and _gammu_smsd__device.stat.islnk
-  register: _gammu_smsd__device
+  when: gammu_smsd__gammu_device is defined and _gammu_smsd__device.stat.exists|bool and _gammu_smsd__device.stat.islnk
+  register: _gammu_smsd__device_link
   check_mode: False
 
-- name: Check the value of the device group
+- name: Keep only the last stat values
+  set_fact:
+    _gammu_smsd__device: '{{ _gammu_smsd__device if _gammu_smsd__device.skipped|d(False) else _gammu_smsd__device }}'
+
+- name: Check the presence of the serial device
   fail:
-    msg: The group of the device file is incorrect
-  when: gammu_smsd__gammu_device is defined and ( _gammu_smsd__device.stat.gr_name is not defined or _gammu_smsd__device.stat.gr_name|length == 0 )
+    msg: The device does not exists or it's group is incorrect
+  when: gammu_smsd__gammu_device is defined and (
+      not _gammu_smsd__device.stat.exists|bool or
+      _gammu_smsd__device.stat.gr_name is not defined or
+      _gammu_smsd__device.stat.gr_name|length == 0 )
 
 - name: Check the group of the serial device for forbidden groups
   fail:
@@ -28,10 +35,12 @@
 
 - name: "Adding '{{ gammu_smsd__user }}' user to device group '{{ _gammu_smsd__device.stat.gr_name }}'"
   user:
-    name: '{{ gammu_smsd__user }}'
-    groups: '{{ _gammu_smsd__device.stat.gr_name }}'
-    append: yes
+    name:       '{{ gammu_smsd__user }}'
+    groups:     '{{ _gammu_smsd__device.stat.gr_name }}'
+    append:     yes
+    createhome: no
   when: gammu_smsd__gammu_device is defined
+  notify: [ 'restart-gammu-smsd' ]
 
 ## Configuration
 
