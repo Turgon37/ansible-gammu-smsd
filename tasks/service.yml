@@ -1,6 +1,6 @@
 ---
 
-- name: install gammu-smsd.service systemd unit file
+- name: Install gammu-smsd.service systemd unit file
   template:
     src:   gammu-smsd.service.j2
     dest:  '/etc/systemd/system/{{ gammu_smsd__service_name }}.service'
@@ -10,7 +10,7 @@
   when: gammu_smsd__service_configure_systemd|bool and ansible_service_mgr == 'systemd'
   register: _gammu_smsd__service
 
-- name: remove sysvinit unit file
+- name: Remove sysvinit unit file
   file:
     path:  /etc/init.d/gammu-smsd
     state: absent
@@ -19,25 +19,24 @@
 - name: Reload systemd
   systemd:
     name:          '{{ gammu_smsd__service_name }}'
-    enabled:       "{{ gammu_smsd__deamon_enabled|bool|ternary('yes', 'no') }}"
+    enabled:       '{{ gammu_smsd__service_enabled|bool }}'
     daemon_reload: yes
   when: _gammu_smsd__service|changed and ansible_service_mgr == 'systemd'
 
 - name: Ensure Gammu SMSD is started and enabled on boot
   service:
     name:    '{{ gammu_smsd__service_name }}'
-    enabled: '{{ gammu_smsd__deamon_enabled|bool|ternary("yes", "no") }}'
-    state:   '{{ gammu_smsd__deamon_enabled|bool|ternary("started", "stopped") }}'
-  when: gammu_smsd__deamon_enabled
+    enabled: '{{ gammu_smsd__service_enabled|bool }}'
+    state:   "{{ gammu_smsd__service_enabled|bool|ternary('started', 'stopped') }}"
 
 - meta: flush_handlers
 
 - name: "Send a test SMS via gammu to {{ gammu_smsd__test_sms_number }}"
   shell: "echo '[Ansible] test message from {{ ansible_fqdn }}' | gammu --config {{ gammu_smsd__gammu_file }} sendsms TEXT {{ gammu_smsd__test_sms_number }}"
   become_user: '{{ gammu_smsd__user }}'
-  when: gammu_smsd__test_sms_number is defined and not gammu_smsd__deamon_enabled
+  when: gammu_smsd__test_sms_number is defined and not gammu_smsd__service_enabled
 
 - name: "Send a test SMS via gammu-smsd to {{ gammu_smsd__test_sms_number }}"
   shell: "echo '[Ansible] test message from {{ ansible_fqdn }}' | gammu-smsd-inject TEXT {{ gammu_smsd__test_sms_number }}"
   become_user: '{{ gammu_smsd__user }}'
-  when: gammu_smsd__test_sms_number is defined and gammu_smsd__deamon_enabled
+  when: gammu_smsd__test_sms_number is defined and gammu_smsd__service_enabled

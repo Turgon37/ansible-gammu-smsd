@@ -7,9 +7,6 @@ gammu_smsd__role: True
 # Enable facts deploiement
 gammu_smsd__facts: True
 
-# If the daemon must be enabled
-gammu_smsd__deamon_enabled: true
-
 # List of packages required for Gammu SMSD
 gammu_smsd__packages_names:
   - gammu
@@ -32,6 +29,12 @@ gammu_smsd__cron_file: /etc/crontab
 
 # The name of the service
 gammu_smsd__service_name: gammu-smsd
+
+# If the daemon must be enabled
+gammu_smsd__service_enabled: True
+
+# The nice priority for the gammu-smsd service
+gammu_smsd__service_nice: 0
 
 # Path to hostapd binary executable
 gammu_smsd__executable: /usr/bin/gammu-smsd

@@ -12,5 +12,7 @@ PIDFile={{ gammu_smsd__service_pidfile }}
 ExecStart={{ gammu_smsd__executable }} --config={{ gammu_smsd__gammusmsdrc_file }} --pid={{ gammu_smsd__service_pidfile }} --daemon --user={{ gammu_smsd__user }} --group={{ gammu_smsd__group }}
 ExecReload=/bin/kill -HUP $MAINPID
 
+Nice={{ gammu_smsd__service_nice|int }}
+
 [Install]
 WantedBy=multi-user.target
