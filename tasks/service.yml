@@ -9,12 +9,14 @@
     mode:  0755
   when: gammu_smsd__service_configure_systemd|bool and ansible_service_mgr == 'systemd'
   register: _gammu_smsd__service
+  notify: [ 'restart-gammu-smsd' ]
 
 - name: Remove sysvinit unit file
   file:
     path:  /etc/init.d/gammu-smsd
     state: absent
   when: gammu_smsd__service_configure_systemd|bool and ansible_service_mgr == 'systemd'
+  notify: [ 'restart-gammu-smsd' ]
 
 - name: Reload systemd
   systemd:
