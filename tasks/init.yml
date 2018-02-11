@@ -5,4 +5,5 @@
     that:
       - gammu_smsd__gammu_connection is defined
       - gammu_smsd__gammu_device is defined
+      - '-20 >= gammu_smsd__service_nice and gammu_smsd__service_nice <= 19'
       - gammu_smsd__smsd_db_service in ['FILES', 'NULL', 'SQL', 'MYSQL', 'PGSQL', 'DBI']
