@@ -35,7 +35,7 @@ The variables that can be passed to this role and a brief description about them
 
 | Name                                 | Types/Values          | Description                                                                                        |
 | -------------------------------------| ----------------------|----------------------------------------------------------------------------------------------------|
-| gammu_smsd__facts                    | Boolean               | Install the local fact                                                                             |
+| gammu_smsd__facts                    | Boolean               | Install the local fact script                                                                      |
 | gammu_smsd__service_configure_systemd| Boolean               | Install a custom systemd init script instead of init.d one to better understand daemon start errors|
 | gammu_smsd__service_nice             | Integer from -20 to 19| Set custom nice on service                                                                         |
 
