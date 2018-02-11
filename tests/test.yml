@@ -2,3 +2,6 @@
 - hosts: all
   roles:
     - role_under_test
+  vars:
+    gammu_smsd__gammu_connection: at19200
+    gammu_smsd__gammu_device: /dev/tty1
