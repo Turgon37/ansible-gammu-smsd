@@ -15,6 +15,12 @@
 - import_tasks: init.yml
   tags: ['always']
 
+- name: Run apt-backports
+  include_role:
+    name: apt-backports
+  when: ansible_distribution_release in ['jessie'] and gammu_smsd__packages_allow_backports|bool
+  tags: ['always']
+
 - import_tasks: install.yml
   tags: ['gammu-smsd', 'gammu-smsd-install']
 
