@@ -5,10 +5,10 @@
   include_vars: "{{ item }}"
   with_first_found:
     - files:
-        - "{{ ansible_distribution }}-{{ ansible_distribution_version }}.yml"
-        - "{{ ansible_distribution }}.yml"
-        - "{{ ansible_os_family }}.yml"
-        - "defaults.yml"
+        - '{{ ansible_distribution }}-{{ ansible_distribution_version }}.yml'
+        - '{{ ansible_distribution }}.yml'
+        - '{{ ansible_os_family }}.yml'
+        - defaults.yml
       skip: true
   tags: ['always']
 
@@ -19,7 +19,7 @@
   include_role:
     name: apt-backports
   when: ansible_distribution_release in ['jessie'] and gammu_smsd__packages_allow_backports|bool
-  tags: ['always']
+  tags: ['gammu-smsd', 'gammu-smsd-install']
 
 - import_tasks: install.yml
   tags: ['gammu-smsd', 'gammu-smsd-install']
@@ -32,3 +32,4 @@
 
 - include_tasks: facts.yml
   when: gammu_smsd__facts|bool
+  tags: ['gammu-smsd', 'gammu-smsd-facts']
