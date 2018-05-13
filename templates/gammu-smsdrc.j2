@@ -55,7 +55,7 @@ ReceiveFrequency = {{ gammu_smsd__receive_frequency|int }}
 MultipartTimeout = {{ gammu_smsd__multipart_timeout|int }}
 DeliveryReport = {{ gammu_smsd__delivery_report }}
 DeliveryReportDelay = {{ gammu_smsd__delivery_report_delay|int }}
-{% if gammu_smsd__version is version_compare('1.36.2', '>=') %}
+{% if gammu_smsd__smsc is defined and gammu_smsd__version is version_compare('1.36.2', '>=') %}
 SMSC = {{ gammu_smsd__smsc }}
 {% endif %}
 
