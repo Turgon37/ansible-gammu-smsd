@@ -1,5 +1,20 @@
 ---
 
+- name: Get installed version of GammuSMSD.
+  command: /usr/bin/env gammu-smsd --version
+  when: ansible_local.gammu_smsd is not defined
+  changed_when: False
+  check_mode: False
+  register: _gammu_smsd__version
+
+- name: Create gammu_smsd__version variable
+  set_fact:
+    gammu_smsd__version: "{{ _gammu_smsd__version.stdout_lines[0]|regex_replace('^Gammu-smsd\\s+version\\s+([0-9.]+)$', '\\1') if _gammu_smsd__version is not skipped else ansible_local.gammu_smsd.version_full }}"
+
+- fail:
+    msg: Backend SQL is not available with your version of Gammu
+  when: gammu_smsd__service == 'SQL' and gammu_smsd__version is version_compare('1.28.93', '<')
+
 ## Peripheral checks
 
 - name: Get serial device stats
@@ -44,6 +59,28 @@
 
 ## Configuration
 
+- name: Ensure var directory exists
+  file:
+    path:  '{{ gammu_smsd__var_dir }}'
+    owner: root
+    group: root
+    mode:  '0755'
+    state: directory
+
+- name: Ensure FILES backend directories exists
+  file:
+    path:  '{{ item }}'
+    owner: '{{ gammu_smsd__user }}'
+    group: '{{ gammu_smsd__group }}'
+    mode:  '0770'
+    state: directory
+  when: gammu_smsd__service == 'FILES'
+  with_items:
+    - '{{ gammu_smsd__backend_files_inbox }}'
+    - '{{ gammu_smsd__backend_files_outbox }}'
+    - '{{ gammu_smsd__backend_files_sent }}'
+    - '{{ gammu_smsd__backend_files_error }}'
+
 - name: Install gammurc file
   template:
     src:   gammurc.j2
@@ -61,14 +98,14 @@
     mode:  0644
   notify: [ 'restart-gammu-smsd' ]
 
-- name: Install gammu-smsd default configuration file
+- name: Install gammu-smsd environment file
   template:
-    src:   default-gammu-smsd.j2
+    src:   gammu-smsd.environment.j2
     dest:  '{{ gammu_smsd__service_environment }}'
     owner: root
     group: root
     mode:  0644
-  when: ansible_distribution == 'Debian'
+  when: gammu_smsd__service_environment is defined
   notify: [ 'restart-gammu-smsd' ]
 
 - name: Test gammu log file
@@ -91,15 +128,11 @@
     )
   notify: [ 'restart-gammu-smsd' ]
 
-#- name: Initialise sqlite database
-  #include: init_sqlite_database.yml
-  #when: gammu_smsd__smsd_db_service == 'SQL' and gammu_smsd__smsd_db_sql_driver == 'sqlite3'
-
 - name: Configure crontab jobs
   cron:
     name: 'GAMMU_SMSD-PHONE-MONITORING'
     minute: '*/10'
-    job: '(date --rfc-3339=ns; /usr/bin/gammu-smsd-monitor --use-log -C --loops 1) > {{ gammu_smsd__gammusmsd_var_dir }}phones_status'
+    job: '(date --rfc-3339=ns; /usr/bin/gammu-smsd-monitor --use-log -C --loops 1) > {{ gammu_smsd__var_dir }}/phones_status'
     user: '{{ gammu_smsd__user }}'
     cron_file: '{{ gammu_smsd__cron_file }}'
     state: "{{ 'present' if gammu_smsd__smsd_monitoring_cron else 'absent' }}"

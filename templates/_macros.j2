@@ -1,0 +1,19 @@
+{#
+ # Produce a gammurc boolean
+ #
+ # @param value : the value to booleanize
+ # @return string
+ #}
+{%- macro gammubool(value) -%}
+{{ value|bool|ternary('yes', 'no') }}
+{%- endmacro -%}
+
+{#
+ # Produce a gammusmsdrc boolean
+ #
+ # @param value : the value to booleanize
+ # @return string
+ #}
+{%- macro bool(value) -%}
+{{ value|bool|ternary(1, 0) }}
+{%- endmacro -%}

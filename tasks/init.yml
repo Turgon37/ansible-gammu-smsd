@@ -5,5 +5,11 @@
     that:
       - gammu_smsd__gammu_connection is defined
       - gammu_smsd__gammu_device is defined
-      - '-20 <= gammu_smsd__service_nice and gammu_smsd__service_nice <= 19'
-      - gammu_smsd__smsd_db_service in ['FILES', 'NULL', 'SQL', 'MYSQL', 'PGSQL', 'DBI']
+      - gammu_smsd__gammu_logformat in ['nothing', 'text', 'textall', 'textalldate', 'errors', 'errorsdate', 'binary']
+      - gammu_smsd__daemon_logfacility in ['DAEMON', 'USER', 'LOCAL0', 'LOCAL1', 'LOCAL2', 'LOCAL3', 'LOCAL4', 'LOCAL5', 'LOCAL6', 'LOCAL7']
+      - gammu_smsd__delivery_report in ['log', 'sms', 'no']
+      - -20 <= gammu_smsd__service_nice and gammu_smsd__service_nice <= 19
+      - gammu_smsd__service in ['FILES', 'NULL', 'SQL', 'MYSQL', 'PGSQL', 'DBI']
+      - gammu_smsd__service != 'FILES' or (gammu_smsd__service == 'FILES' and gammu_smsd__backend_files_inbox_format in ['detail', 'unicode', 'standard'])
+      - gammu_smsd__service != 'FILES' or (gammu_smsd__service == 'FILES' and gammu_smsd__backend_files_outbox_format in ['detail', 'unicode', 'standard'])
+      - gammu_smsd__service != 'SQL' or (gammu_smsd__service == 'SQL' and gammu_smsd__backend_sql_driver is defined)

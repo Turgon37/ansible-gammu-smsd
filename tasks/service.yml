@@ -20,10 +20,8 @@
 
 - name: Reload systemd
   systemd:
-    name:          '{{ gammu_smsd__service_name }}'
-    enabled:       '{{ gammu_smsd__service_enabled|bool }}'
     daemon_reload: yes
-  when: _gammu_smsd__service|changed and ansible_service_mgr == 'systemd'
+  when: _gammu_smsd__service is changed and ansible_service_mgr == 'systemd'
 
 - name: Ensure Gammu SMSD is started and enabled on boot
   service:
