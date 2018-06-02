@@ -3,5 +3,7 @@
 
 - name: restart-gammu-smsd
   service:
-    name: '{{ gammu_smsd__service_name }}'
+    name:  "{{ gammu_smsd__service_name|replace('%i', item.key) }}"
     state: restarted
+  with_dict: '{{ gammu_smsd__instances }}'
+  when: gammu_smsd__service_enabled|bool and item.value.state|d('present') == 'present'

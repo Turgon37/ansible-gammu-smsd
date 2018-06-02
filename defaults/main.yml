@@ -7,12 +7,17 @@ gammu_smsd__role: True
 # Enable facts deploiement
 gammu_smsd__facts: True
 
+# Choose the monitoring backend to configure (if available)
+#gammu_smsd__monitoring:
+
+
+### INSTALL CONFIGURATION
 # List of packages required for Gammu SMSD
 gammu_smsd__packages_names:
   - gammu
   - gammu-smsd
 
-# Try to enable this to get the latest version of USB modeswitch
+# On debian family configure backports to get a newer version of gammu libraries
 gammu_smsd__packages_allow_backports: False
 
 
@@ -21,19 +26,8 @@ gammu_smsd__packages_allow_backports: False
 gammu_smsd__user: gammu
 gammu_smsd__group: gammu
 
-## Gammu configuration
-# Gammu configuration file path
-gammu_smsd__gammurc_file: /etc/gammurc
-gammu_smsd__gammusmsdrc_file: /etc/gammu-smsdrc
-
-# The data directory
-gammu_smsd__var_dir: /var/spool/gammu
-
-# the crontab file to use for cron jobs
-gammu_smsd__cron_file: /etc/crontab
-
 # The name of the service
-gammu_smsd__service_name: gammu-smsd
+gammu_smsd__service_name: 'gammu-smsd{% if gammu_smsd__service_configure_systemd|bool %}@%i{% endif %}'
 
 # If the daemon must be enabled
 gammu_smsd__service_enabled: True
@@ -42,247 +36,260 @@ gammu_smsd__service_enabled: True
 gammu_smsd__service_nice: 0
 
 # Path to GammuSMSD binary executable
-gammu_smsd__executable: /usr/bin/gammu-smsd
+gammu_smsd__service_executable: /usr/bin/gammu-smsd
+
 # Path to GammuSMSD pidfile
-gammu_smsd__service_pidfile: /var/run/gammu-smsd.pid
+gammu_smsd__service_pidfile: '/var/run/gammu-smsd{% if gammu_smsd__service_configure_systemd|bool %}.%i{% endif %}.pid'
+
 # File that contains environment variables for service unit
 #gammu_smsd__service_environment:
+
+# The path to the configuration directory
+gammu_smsd__configuration_directory: /etc/gammu-smsd
+
+# The path to the configuration file of each instances
+gammu_smsd__configuration_file: '{{ gammu_smsd__configuration_directory }}/%i.smsdrc'
+
+# The data directory
+gammu_smsd__var_directory: /var/spool/gammu
 
 # Set to yes to deploy and override systemd service configuration
 gammu_smsd__service_configure_systemd: False
 
-
 # If set to a valid phone number, a test SMS will be send to this device
 #gammu_smsd__test_sms_number:
 
-# Enable the phone monitoring cron
-gammu_smsd__smsd_monitoring_cron: False
+
+### INSTANCE CONFIGURATIONS
+
+# Dict of gammu-smsd instances
+gammu_smsd__instances: {}
+
+# default parameter for all instances
+gammu_smsd__instance_defaults:
+  # The type of connection between the host and the phone
+  #connection:
+
+  # The /dev/ device to use to access to phone
+  #device:
+
+  # The model of the phone
+  #model:
+
+  # When Gammu access the phone, it locks it to prevent other people access
+  use_locking: False
+
+  # Synchronise the phone time with the host time on boot
+  synchronise_time: True
+
+  # If this is set to true, the phone will blink when gammu start connection to it
+  start_info: True
+
+  # The path to the gammu log file
+  # Configure the logfile for gammu utility (not for smsd)
+  #logfile: /var/log/gammu.%i.log
+
+  # The debugging level into the gammu log file
+  # nothing no debug level
+  # text    transmission dump in text format
+  # textall  all possible info in text format
+  # textalldate  all possible info in text format, with time stamp
+  # errors   errors in text format
+  # errorsdate  errors in text format, with time stamp
+  # binary   transmission dump in binary format
+  logformat: nothing
 
 
-### GAMMU LIBRARY CONFIGURATION
-# The type of connection between the host and the phone
-#gammu_smsd__gammu_connection:
+  ### GAMMUSMSD CONFIGURATION
+  ## Gammu phone
+  # String with info about phone used for sending/receiving.
+  # This can be useful if you want to run several SMS daemons.
+  phone_id: 1
+  #pincode: 1234
+  #phonecode: 1234
 
-# The /dev/ device to use to access to phone
-#gammu_smsd__gammu_device:
+  ## Gammu SMSD features
+  # Whether to enable sending of messages
+  send: True
+  # Whether to enable receiving of messages
+  receive: True
 
-# The model of the phone
-#gammu_smsd__gammu_model:
+  ## GSM Network settings
+  # How many seconds should SMSD wait after there is no message in outbox.
+  comm_timeout: 30
 
-# When Gammu access the phone, it locks it to prevent other people access
-gammu_smsd__gammu_use_locking: False
+  # Shows how many seconds SMSD should wait for network answer during sending sms.
+  # If nothing happen during this time, sms will be resent.
+  send_timeout: 30
 
-# Synchronise the phone time with the host time on boot
-gammu_smsd__gammu_synchronise_time: True
+  # How many times will SMSD try to resend message
+  max_retries: 1
 
-# If this is set to true, the phone will blink when gammu start connection to it
-gammu_smsd__gammu_start_info: True
+  # How long to wait before resending failed message (needs to be enabled by MaxRetries).
+  retry_timeout: 600
 
-# The path to the gammu log file
-# Configure the logfile for gammu utility (not for smsd)
-gammu_smsd__gammu_logfile: /var/log/gammu.log
+  # The number of seconds between testing for received SMSes, when the phone is busy sending SMSes.
+  # Normally a test for received SMSes is done every CommTimeout seconds and after each sent SMS.
+  receive_frequency: 15
 
-# The debugging level into the gammu log file
-# nothing no debug level
-# text    transmission dump in text format
-# textall  all possible info in text format
-# textalldate  all possible info in text format, with time stamp
-# errors   errors in text format
-# errorsdate  errors in text format, with time stamp
-# binary   transmission dump in binary format
-gammu_smsd__gammu_logformat: nothing
+  # The number of seconds how long will SMSD wait for all parts of multipart message.
+  # If all parts won’t arrive in time, parts will be processed as separate messages
+  multipart_timeout: 600
 
+  # Whether delivery reports should be used.
+  # log    one line log entry,
+  # sms    store in inbox as a received SMS
+  # no     no delivery reports
+  delivery_report: 'no'
 
-### GAMMUSMSD CONFIGURATION
-## Gammu phone
-# String with info about phone used for sending/receiving.
-# This can be useful if you want to run several SMS daemons.
-gammu_smsd__phone_id: 1
-#gammu_smsd__pincode: 1234
-#gammu_smsd__phonecode: 1234
+  # Delay in seconds how long is still delivery report considered valid
+  delivery_report_delay: 600
 
-## Gammu SMSD features
-# Whether to enable sending of messages
-gammu_smsd__send: True
-# Whether to enable receiving of messages
-gammu_smsd__receive: True
+  # SMSC number to use for sending messages if not specified in the message (see options of gammu-smsd-inject).
+  #smsc: +33000000000
 
-## GSM Network settings
-# How many seconds should SMSD wait after there is no message in outbox.
-gammu_smsd__comm_timeout: 30
+  ## SMSD Hardware
+  # The number of seconds between refreshing phone status
+  status_frequency: 60
 
-# Shows how many seconds SMSD should wait for network answer during sending sms.
-# If nothing happen during this time, sms will be resent.
-gammu_smsd__send_timeout: 30
+  # The number of seconds how long will SMSD sleep before checking for some activity.
+  # Please note that setting this to higher value than 1 will have effects
+  #  to other time based configurations, because they will be effectively rounded to multiply of this value.
+  loop_sleep: 1
 
-# How many times will SMSD try to resend message
-gammu_smsd__max_retries: 1
+  # Whether to check if phone wants to enter PIN.
+  check_security: True
 
-# How long to wait before resending failed message (needs to be enabled by MaxRetries).
-gammu_smsd__retry_timeout: 600
+  # Whether to check phone battery state periodically.
+  check_battery: True
 
-# The number of seconds between testing for received SMSes, when the phone is busy sending SMSes.
-# Normally a test for received SMSes is done every CommTimeout seconds and after each sent SMS.
-gammu_smsd__receive_frequency: 15
+  # Whether to check signal level periodically.
+  check_signal: True
 
-# The number of seconds how long will SMSD wait for all parts of multipart message.
-# If all parts won’t arrive in time, parts will be processed as separate messages
-gammu_smsd__multipart_timeout: 600
+  # Whether to check network status periodically.
+  # If phone is reported to be not on the network, SMSD tries to power it on.
+  check_network: True
 
-# Whether delivery reports should be used.
-# log    one line log entry,
-# sms    store in inbox as a received SMS
-# no     no delivery reports
-gammu_smsd__delivery_report: 'no'
+  # Whether to automatically hangup any incoming calls.
+  hangup_calls: False
 
-# Delay in seconds how long is still delivery report considered valid
-gammu_smsd__delivery_report_delay: 600
+  # The number of seconds between performing a preventive soft reset
+  softreset_frequency: 0
 
-# SMSC number to use for sending messages if not specified in the message (see options of gammu-smsd-inject).
-#gammu_smsd__smsc: +33000000000
+  # The number of seconds between performing a preventive hard reset
+  hardreset_frequency: 0
 
-## SMSD Hardware
-# The number of seconds between refreshing phone status
-gammu_smsd__status_frequency: 60
+  ## Logs
+  # File where SMSD actions are being logged.
+  # You can also use special value syslog which will send all messages to syslog daemon.
+  daemon_logfile: syslog
 
-# The number of seconds how long will SMSD sleep before checking for some activity.
-# Please note that setting this to higher value than 1 will have effects
-#  to other time based configurations, because they will be effectively rounded to multiply of this value.
-gammu_smsd__loop_sleep: 1
+  # Facility to use on logging backends which support it (currently only syslog).
+  # One of following chouces:
+  # DAEMON   USER   LOCAL0   LOCAL1   LOCAL2   LOCAL3   LOCAL4   LOCAL5   LOCAL6   LOCAL7
+  daemon_logfacility: DAEMON
 
-# Whether to check if phone wants to enter PIN.
-gammu_smsd__check_security: True
-
-# Whether to check phone battery state periodically.
-gammu_smsd__check_battery: True
-
-# Whether to check signal level periodically.
-gammu_smsd__check_signal: True
-
-# Whether to check network status periodically.
-# If phone is reported to be not on the network, SMSD tries to power it on.
-gammu_smsd__check_network: True
-
-# Whether to automatically hangup any incoming calls.
-gammu_smsd__hangup_calls: False
-
-# The number of seconds between performing a preventive soft reset
-gammu_smsd__softreset_frequency: 0
-
-# The number of seconds between performing a preventive hard reset
-gammu_smsd__hardreset_frequency: 0
-
-## Logs
-# File where SMSD actions are being logged.
-# You can also use special value syslog which will send all messages to syslog daemon.
-gammu_smsd__daemon_logfile: syslog
-
-# Facility to use on logging backends which support it (currently only syslog).
-# One of following chouces:
-# DAEMON   USER   LOCAL0   LOCAL1   LOCAL2   LOCAL3   LOCAL4   LOCAL5   LOCAL6   LOCAL7
-gammu_smsd__daemon_logfacility: DAEMON
-
-# Debug level for SMSD. The integer value should be sum of all flags you want to enable.
-#  1 enables basic debugging information
-#  2 enables logging of SQL queries of service backends
-#  4 enables logging of gammu debug information
-# Generally to get as much debug information as possible, use 255.
-gammu_smsd__daemon_debuglevel: 0
+  # Debug level for SMSD. The integer value should be sum of all flags you want to enable.
+  #  1 enables basic debugging information
+  #  2 enables logging of SQL queries of service backends
+  #  4 enables logging of gammu debug information
+  # Generally to get as much debug information as possible, use 255.
+  daemon_debuglevel: 0
 
 
-### Hooks scripts
-# Executes a program after receiving message.
-#gammu_smsd__run_on_receive: /opt/script.sh
+  ### Hooks scripts
+  # Executes a program after receiving message.
+  #run_on_receive: /opt/script.sh
 
-# Executes a program on failure.
-#gammu_smsd__run_on_failure: /opt/script.sh
+  # Executes a program on failure.
+  #run_on_failure: /opt/script.sh
 
-# Executes a program after sending message.
-#gammu_smsd__smsd_run_on__sent: /opt/script.sh
+  # Executes a program after sending message.
+  #run_on__sent: /opt/script.sh
 
-# Executes a program after cancelling incoming call.
-#gammu_smsd__run_on_incoming_call: /opt/script.sh
-
-
-### Storage Backend
-# How many times will SMSD backend retry operation.
-gammu_smsd__backend_retries: 10
-
-# SMSD service to use, one of following choices:
-# FILES Stores messages in files, see Files backend for details.
-# NULL  Does not store messages at all, see Null Backend for details.
-# SQL   Stores messages in SQL database, see SQL Service for details, choose database type to use by Driver.
-gammu_smsd__service: FILES
+  # Executes a program after cancelling incoming call.
+  #run_on_incoming_call: /opt/script.sh
 
 
-## FILES backend options
-# Where the received SMSes are stored.
-gammu_smsd__backend_files_inbox: '{{ gammu_smsd__var_dir }}/inbox'
+  ### Storage Backend
+  # How many times will SMSD backend retry operation.
+  backend_retries: 10
 
-# Where SMSes to be sent should be placed.
-gammu_smsd__backend_files_outbox: '{{ gammu_smsd__var_dir }}/outbox'
-
-# Where the transmitted SMSes are placed, if same as OutboxPath transmitted messages are deleted
-gammu_smsd__backend_files_sent: '{{ gammu_smsd__var_dir }}/sent'
-
-# Where SMSes with error in transmission is placed.
-gammu_smsd__backend_files_error: '{{ gammu_smsd__var_dir }}/error'
-
-# The format in which the SMS will be stored: detail, unicode, standard.
-#   detail format used for message backup by Gammu Utility, see SMS Backup Format.
-#   unicode message text stored in unicode (UTF-16)
-#   standard message text stored in system charset
-gammu_smsd__backend_files_inbox_format: unicode
-
-# The format in which messages created by gammu-smsd-inject will be stored, it accepts same values as InboxFormat.
-gammu_smsd__backend_files_outbox_format: detail 
-
-# The format for transmitting the SMS: auto, unicode, 7bit.
-# This option is used only if OutboxFormat is not set to detail.
-# In such case encoding specified in the message is used (you can specify it to gammu-smsd-inject).
-gammu_smsd__backend_files_transmit_format: auto
+  # SMSD service to use, one of following choices:
+  # FILES Stores messages in files, see Files backend for details.
+  # NULL  Does not store messages at all, see Null Backend for details.
+  # SQL   Stores messages in SQL database, see SQL Service for details, choose database type to use by Driver.
+  service: FILES
 
 
-## SQL backend options
-# SQL driver to use, Gammu supports several native drivers and generic interface using ODBC and DBI
-# Available drivers:
-#   odbc Connects to the database using ODBC, see ODBC Backend.
-#   native_mysql Stores messages in MySQL database, see MySQL Backend for details.
-#   native_pgsql Stores messages in PostgreSQL database, see PostgreSQL Backend for details.
-#   db2, firebird, freetds, ingres, msql, mysql, oracle, pgsql, sqlite, sqlite3
-#       Stores messages using DBI library in given backend.
-#       You need to have installed appropriate DBI driver to make it work. See DBI Backend for details.
-#gammu_smsd__backend_sql_driver: native_mysql
+  ## FILES backend options
+  # Where the received SMSes are stored.
+  backend_files_inbox: inbox
 
-# SQL dialect to use.
-# This is specially useful with ODBC Backend where SMSD does not know which server it is actually talking to.
-# Possible values:
-#    mysql - MySQL
-#    pgsql - PostgreSQL
-#    sqlite - SQLite
-#    mssql - Microsoft SQL Server
-#    sybase - Sybase
-#    access - Microsoft Access
-#    oracle - Oracle
-#    odbc - Generic ODBC
-#gammu_smsd__backend_sql:
+  # Where SMSes to be sent should be placed.
+  backend_files_outbox: outbox
 
-# User name used for connection to a database
-#gammu_smsd__backend_sql_user: smsd
+  # Where the transmitted SMSes are placed, if same as OutboxPath transmitted messages are deleted
+  backend_files_sent: sent
 
-# Password used for connection to a database
-#gammu_smsd__backend_sql_password: XXXXXXX
+  # Where SMSes with error in transmission is placed.
+  backend_files_error: error
 
-# Database server address. It can also contain port or socket path after semicolon
-#gammu_smsd__backend_sql_host: mysql.host:3306
+  # The format in which the SMS will be stored: detail, unicode, standard.
+  #   detail format used for message backup by Gammu Utility, see SMS Backup Format.
+  #   unicode message text stored in unicode (UTF-16)
+  #   standard message text stored in system charset
+  backend_files_inbox_format: unicode
 
-# Name of database (or schema) to use and where SMSD can find it’s tables.
-#gammu_smsd__backend_sql_database: smsd
+  # The format in which messages created by gammu-smsd-inject will be stored, it accepts same values as InboxFormat.
+  backend_files_outbox_format: detail 
 
-# Path, where DBI drivers are stored,
-# this usually does not have to be set if you have properly installed drivers.
-#gammu_smsd__backend_sql_driverpath:
+  # The format for transmitting the SMS: auto, unicode, 7bit.
+  # This option is used only if OutboxFormat is not set to detail.
+  # In such case encoding specified in the message is used (you can specify it to gammu-smsd-inject).
+  backend_files_transmit_format: auto
 
-# Database directory for some (currently only sqlite) DBI drivers.
-# Set here path where sqlite database files are stored
-gammu_smsd__backend_sql_dbdir: '{{ gammu_smsd__var_dir }}'
+
+  ## SQL backend options
+  # SQL driver to use, Gammu supports several native drivers and generic interface using ODBC and DBI
+  # Available drivers:
+  #   odbc Connects to the database using ODBC, see ODBC Backend.
+  #   native_mysql Stores messages in MySQL database, see MySQL Backend for details.
+  #   native_pgsql Stores messages in PostgreSQL database, see PostgreSQL Backend for details.
+  #   db2, firebird, freetds, ingres, msql, mysql, oracle, pgsql, sqlite, sqlite3
+  #       Stores messages using DBI library in given backend.
+  #       You need to have installed appropriate DBI driver to make it work. See DBI Backend for details.
+  #backend_sql_driver: native_mysql
+
+  # SQL dialect to use.
+  # This is specially useful with ODBC Backend where SMSD does not know which server it is actually talking to.
+  # Possible values:
+  #    mysql - MySQL
+  #    pgsql - PostgreSQL
+  #    sqlite - SQLite
+  #    mssql - Microsoft SQL Server
+  #    sybase - Sybase
+  #    access - Microsoft Access
+  #    oracle - Oracle
+  #    odbc - Generic ODBC
+  #backend_sql:
+
+  # User name used for connection to a database
+  #backend_sql_user: smsd
+
+  # Password used for connection to a database
+  #backend_sql_password: XXXXXXX
+
+  # Database server address. It can also contain port or socket path after semicolon
+  #backend_sql_host: mysql.host:3306
+
+  # Name of database (or schema) to use and where SMSD can find it’s tables.
+  #backend_sql_database: smsd
+
+  # Path, where DBI drivers are stored,
+  # this usually does not have to be set if you have properly installed drivers.
+  #backend_sql_driverpath:
+
+  # Database directory for some (currently only sqlite) DBI drivers.
+  # Set here path where sqlite database files are stored
+  backend_sql_dbdir: '{{ gammu_smsd__var_directory }}'

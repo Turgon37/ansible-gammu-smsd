@@ -11,92 +11,31 @@
   set_fact:
     gammu_smsd__version: "{{ _gammu_smsd__version.stdout_lines[0]|regex_replace('^Gammu-smsd\\s+version\\s+([0-9.]+)$', '\\1') if _gammu_smsd__version is not skipped else ansible_local.gammu_smsd.version_full }}"
 
-- fail:
-    msg: Backend SQL is not available with your version of Gammu
-  when: gammu_smsd__service == 'SQL' and gammu_smsd__version is version_compare('1.28.93', '<')
 
-## Peripheral checks
+## common configuration
 
-- name: Get serial device stats
-  stat:
-    path: '{{ gammu_smsd__gammu_device }}'
-  when: gammu_smsd__gammu_device is defined
-  register: _gammu_smsd__device
-  check_mode: False
-
-- name: Get right of serial device is previous was symlink
-  stat:
-    path: '{{ _gammu_smsd__device.stat.lnk_source }}'
-  when: gammu_smsd__gammu_device is defined and _gammu_smsd__device.stat.exists|bool and _gammu_smsd__device.stat.islnk
-  register: _gammu_smsd__device_link
-  check_mode: False
-
-- name: Keep only the last stat values
-  set_fact:
-    _gammu_smsd__device: '{{ _gammu_smsd__device if _gammu_smsd__device.skipped|d(False) else _gammu_smsd__device }}'
-
-- name: Check the presence of the serial device
-  fail:
-    msg: The device does not exists or it's group is incorrect
-  when: gammu_smsd__gammu_device is defined and (
-      not _gammu_smsd__device.stat.exists|bool or
-      _gammu_smsd__device.stat.gr_name is not defined or
-      _gammu_smsd__device.stat.gr_name|length == 0 )
-
-- name: Check the group of the serial device for forbidden groups
-  fail:
-    msg: 'The peripheral device {{ gammu_smsd__gammu_device }} is group owned by root'
-  when: gammu_smsd__gammu_device is defined and (_gammu_smsd__device.stat.gr_name == 'root' or _gammu_smsd__device.stat.gid == 0)
-
-- name: "Adding '{{ gammu_smsd__user }}' user to device group '{{ _gammu_smsd__device.stat.gr_name }}'"
-  user:
-    name:       '{{ gammu_smsd__user }}'
-    groups:     '{{ _gammu_smsd__device.stat.gr_name }}'
-    append:     yes
-    createhome: no
-  when: gammu_smsd__gammu_device is defined
-  notify: [ 'restart-gammu-smsd' ]
-
-## Configuration
-
-- name: Ensure var directory exists
+- name: Ensure configuration directory exists
   file:
-    path:  '{{ gammu_smsd__var_dir }}'
+    path:  '{{ gammu_smsd__configuration_directory }}'
     owner: root
     group: root
     mode:  '0755'
     state: directory
 
-- name: Ensure FILES backend directories exists
+- name: Ensure var directory exists
+  file:
+    path:  '{{ gammu_smsd__var_directory }}'
+    owner: root
+    group: root
+    mode:  '0755'
+    state: directory
+
+- name: Remove packages configurations files
   file:
     path:  '{{ item }}'
-    owner: '{{ gammu_smsd__user }}'
-    group: '{{ gammu_smsd__group }}'
-    mode:  '0770'
-    state: directory
-  when: gammu_smsd__service == 'FILES'
+    state: absent
   with_items:
-    - '{{ gammu_smsd__backend_files_inbox }}'
-    - '{{ gammu_smsd__backend_files_outbox }}'
-    - '{{ gammu_smsd__backend_files_sent }}'
-    - '{{ gammu_smsd__backend_files_error }}'
-
-- name: Install gammurc file
-  template:
-    src:   gammurc.j2
-    dest:  '{{ gammu_smsd__gammurc_file }}'
-    owner: root
-    group: root
-    mode:  0644
-
-- name: Install gammu-smsdrc file
-  template:
-    src:   gammu-smsdrc.j2
-    dest:  '{{ gammu_smsd__gammusmsdrc_file }}'
-    owner: root
-    group: root
-    mode:  0644
-  notify: [ 'restart-gammu-smsd' ]
+    - /etc/gammu-smsdrc
 
 - name: Install gammu-smsd environment file
   template:
@@ -107,32 +46,3 @@
     mode:  0644
   when: gammu_smsd__service_environment is defined
   notify: [ 'restart-gammu-smsd' ]
-
-- name: Test gammu log file
-  stat:
-    path: '{{ gammu_smsd__gammu_logfile }}'
-  when: gammu_smsd__gammu_logfile is defined
-  register: _gammu_smsd__gammu_log
-  check_mode: False
-
-- name: Init gammu log file
-  file:
-    path:  '{{ gammu_smsd__gammu_logfile }}'
-    owner: '{{ gammu_smsd__user }}'
-    group: '{{ gammu_smsd__group }}'
-    state: touch
-  when: gammu_smsd__gammu_logfile is defined and (
-      not _gammu_smsd__gammu_log.stat.exists or 
-      (gammu_smsd__user is defined and _gammu_smsd__gammu_log.stat.pw_name != gammu_smsd__user ) or
-      (gammu_smsd__group is defined and _gammu_smsd__gammu_log.stat.gr_name != gammu_smsd__group )
-    )
-  notify: [ 'restart-gammu-smsd' ]
-
-- name: Configure crontab jobs
-  cron:
-    name: 'GAMMU_SMSD-PHONE-MONITORING'
-    minute: '*/10'
-    job: '(date --rfc-3339=ns; /usr/bin/gammu-smsd-monitor --use-log -C --loops 1) > {{ gammu_smsd__var_dir }}/phones_status'
-    user: '{{ gammu_smsd__user }}'
-    cron_file: '{{ gammu_smsd__cron_file }}'
-    state: "{{ 'present' if gammu_smsd__smsd_monitoring_cron else 'absent' }}"

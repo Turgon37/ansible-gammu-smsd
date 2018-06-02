@@ -3,7 +3,7 @@
 - name: Install gammu-smsd.service systemd unit file
   template:
     src:   gammu-smsd.service.j2
-    dest:  '/etc/systemd/system/{{ gammu_smsd__service_name }}.service'
+    dest:  "/etc/systemd/system/{{ gammu_smsd__service_name|replace('%i', '') }}.service"
     owner: root
     group: root
     mode:  0755
@@ -22,21 +22,3 @@
   systemd:
     daemon_reload: yes
   when: _gammu_smsd__service is changed and ansible_service_mgr == 'systemd'
-
-- name: Ensure Gammu SMSD is started and enabled on boot
-  service:
-    name:    '{{ gammu_smsd__service_name }}'
-    enabled: '{{ gammu_smsd__service_enabled|bool }}'
-    state:   "{{ gammu_smsd__service_enabled|bool|ternary('started', 'stopped') }}"
-
-- meta: flush_handlers
-
-- name: "Send a test SMS via gammu to {{ gammu_smsd__test_sms_number }}"
-  shell: "echo '[Ansible] test message from {{ ansible_fqdn }}' | gammu --config {{ gammu_smsd__gammu_file }} sendsms TEXT {{ gammu_smsd__test_sms_number }}"
-  become_user: '{{ gammu_smsd__user }}'
-  when: gammu_smsd__test_sms_number is defined and not gammu_smsd__service_enabled
-
-- name: "Send a test SMS via gammu-smsd to {{ gammu_smsd__test_sms_number }}"
-  shell: "echo '[Ansible] test message from {{ ansible_fqdn }}' | gammu-smsd-inject TEXT {{ gammu_smsd__test_sms_number }}"
-  become_user: '{{ gammu_smsd__user }}'
-  when: gammu_smsd__test_sms_number is defined and gammu_smsd__service_enabled

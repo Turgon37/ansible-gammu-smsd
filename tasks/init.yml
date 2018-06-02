@@ -1,15 +1,24 @@
 ---
 
-- name: Assert required variables
+- fail:
+    msg: Using multiple instance is only available using systemd with gammu_smsd__service_configure_systemd
+  when: not gammu_smsd__service_configure_systemd|bool and hostapd__instances|length > 1
+
+- name: Assert required variables per instances
   assert:
     that:
-      - gammu_smsd__gammu_connection is defined
-      - gammu_smsd__gammu_device is defined
-      - gammu_smsd__gammu_logformat in ['nothing', 'text', 'textall', 'textalldate', 'errors', 'errorsdate', 'binary']
-      - gammu_smsd__daemon_logfacility in ['DAEMON', 'USER', 'LOCAL0', 'LOCAL1', 'LOCAL2', 'LOCAL3', 'LOCAL4', 'LOCAL5', 'LOCAL6', 'LOCAL7']
-      - gammu_smsd__delivery_report in ['log', 'sms', 'no']
+      - gammu_smsd__instance.connection is defined
+      - gammu_smsd__instance.device is defined
+      - gammu_smsd__instance.logformat in ['nothing', 'text', 'textall', 'textalldate', 'errors', 'errorsdate', 'binary']
+      - gammu_smsd__instance.daemon_logfacility in ['DAEMON', 'USER', 'LOCAL0', 'LOCAL1', 'LOCAL2', 'LOCAL3', 'LOCAL4', 'LOCAL5', 'LOCAL6', 'LOCAL7']
+      - gammu_smsd__instance.delivery_report in ['log', 'sms', 'no']
       - -20 <= gammu_smsd__service_nice and gammu_smsd__service_nice <= 19
-      - gammu_smsd__service in ['FILES', 'NULL', 'SQL', 'MYSQL', 'PGSQL', 'DBI']
-      - gammu_smsd__service != 'FILES' or (gammu_smsd__service == 'FILES' and gammu_smsd__backend_files_inbox_format in ['detail', 'unicode', 'standard'])
-      - gammu_smsd__service != 'FILES' or (gammu_smsd__service == 'FILES' and gammu_smsd__backend_files_outbox_format in ['detail', 'unicode', 'standard'])
-      - gammu_smsd__service != 'SQL' or (gammu_smsd__service == 'SQL' and gammu_smsd__backend_sql_driver is defined)
+      - gammu_smsd__instance.service in ['FILES', 'NULL', 'SQL', 'MYSQL', 'PGSQL', 'DBI']
+      - gammu_smsd__instance.service != 'FILES' or (gammu_smsd__instance.service == 'FILES' and gammu_smsd__instance.backend_files_inbox_format in ['detail', 'unicode', 'standard'])
+      - gammu_smsd__instance.service != 'FILES' or (gammu_smsd__instance.service == 'FILES' and gammu_smsd__instance.backend_files_outbox_format in ['detail', 'unicode', 'standard'])
+      - gammu_smsd__instance.service != 'SQL' or (gammu_smsd__instance.service == 'SQL' and gammu_smsd__instance.backend_sql_driver is defined)
+  with_dict: '{{ gammu_smsd__instances }}'
+  vars:
+    gammu_smsd__instance: "{{ gammu_smsd__instance_defaults|combine(outer_item.value)|combine({'name': outer_item.key}) }}"
+  loop_control:
+    loop_var: outer_item

@@ -1,0 +1,167 @@
+---
+
+- name: Check instance prerequisites
+  assert:
+    that:
+      - gammu_smsd__instance is defined
+      - gammu_smsd__instance.name is defined
+    msg: gammu_smsd__instance must be defined with specifications and gammu_smsd__instance.name must contains the name of the instance
+  tags: ['always']
+
+- name: Init some value
+  set_fact:
+    _gammu_smsd__instance_var_directory: '{{ gammu_smsd__var_directory }}/{{ gammu_smsd__instance.name }}'
+  tags: ['always']
+
+- fail:
+    msg: Backend SQL is not available with your version of Gammu
+  when: gammu_smsd__instance.service == 'SQL' and gammu_smsd__version is version_compare('1.28.93', '<')
+  tags: ['always']
+
+## Peripheral checks
+
+- name: Get serial device stats
+  stat:
+    path: '{{ gammu_smsd__instance.device }}'
+  when: gammu_smsd__instance.device is defined
+  register: _gammu_smsd__device
+  check_mode: False
+  tags: ['gammu-smsd', 'gammu-smsd-configure']
+
+- name: Get right of serial device if previous was symlink
+  stat:
+    path: '{{ _gammu_smsd__device.stat.lnk_source }}'
+  when: gammu_smsd__instance.device is defined and _gammu_smsd__device.stat.exists|bool and _gammu_smsd__device.stat.islnk
+  register: _gammu_smsd__device_link
+  check_mode: False
+  tags: ['gammu-smsd', 'gammu-smsd-configure']
+
+- name: Keep only the last stat values
+  set_fact:
+    _gammu_smsd__device: '{{ _gammu_smsd__device if _gammu_smsd__device.skipped|d(False) else _gammu_smsd__device }}'
+  tags: ['gammu-smsd', 'gammu-smsd-configure']
+
+- name: Check the presence of the serial device
+  fail:
+    msg: The device does not exists or it's group is incorrect
+  when: gammu_smsd__instance.device is defined and (
+      not _gammu_smsd__device.stat.exists|bool or
+      _gammu_smsd__device.stat.gr_name is not defined or
+      _gammu_smsd__device.stat.gr_name|length == 0 )
+  tags: ['gammu-smsd', 'gammu-smsd-configure']
+
+- name: Check the group of the serial device for forbidden groups
+  fail:
+    msg: 'The peripheral device {{ gammu_smsd__gammu_device }} is group owned by root'
+  when: gammu_smsd__instance.device is defined and (_gammu_smsd__device.stat.gr_name == 'root' or _gammu_smsd__device.stat.gid == 0)
+  tags: ['gammu-smsd', 'gammu-smsd-configure']
+
+- name: "Adding '{{ gammu_smsd__user }}' user to device group '{{ _gammu_smsd__device.stat.gr_name }}'"
+  user:
+    name:       '{{ gammu_smsd__user }}'
+    groups:     '{{ _gammu_smsd__device.stat.gr_name }}'
+    append:     yes
+    createhome: no
+  when: gammu_smsd__instance.device is defined
+  register: _gammu_smsd__instance_device
+  tags: ['gammu-smsd', 'gammu-smsd-configure']
+
+## Directories configurations
+
+- name: Ensure instance var directory exists
+  file:
+    path:  '{{ _gammu_smsd__instance_var_directory }}'
+    owner: root
+    group: root
+    mode:  '0755'
+    state: directory
+  tags: ['gammu-smsd', 'gammu-smsd-configure']
+
+- name: Ensure FILES backend directories exists
+  file:
+    path:  "{% if gammu_smsd__instance[item][0] != '/' %}{{ _gammu_smsd__instance_var_directory }}/{% endif %}{{ gammu_smsd__instance[item] }}"
+    owner: '{{ gammu_smsd__user }}'
+    group: '{{ gammu_smsd__group }}'
+    mode:  '0770'
+    state: directory
+  when: gammu_smsd__instance.service == 'FILES'
+  with_items:
+    - backend_files_inbox
+    - backend_files_outbox
+    - backend_files_sent
+    - backend_files_error
+  tags: ['gammu-smsd', 'gammu-smsd-configure']
+
+### Configuration file
+
+- name: Install instance configuration file
+  template:
+    src:   gammu-smsdrc.j2
+    dest:  "{{ gammu_smsd__configuration_file|replace('%i', gammu_smsd__instance.name) }}"
+    owner: '{{ gammu_smsd__user }}'
+    group: '{{ gammu_smsd__group }}'
+    mode:  0640
+  when: gammu_smsd__instance.state|d('present') == 'present'
+  register: _gammu_smsd__instance_config
+  tags: ['gammu-smsd', 'gammu-smsd-configure']
+
+- name: Remove instance configuration file
+  file:
+    path:  "{{ gammu_smsd__configuration_file|replace('%i', gammu_smsd__instance.name) }}"
+    state: absent
+  when: gammu_smsd__instance.state|d('present') != 'present'
+  tags: ['gammu-smsd', 'gammu-smsd-configure']
+
+- name: Test gammu log file
+  stat:
+    path: "{{ gammu_smsd__gammu_logfile|replace('%i', gammu_smsd__instance.name) }}"
+  when: gammu_smsd__instance.logfile is defined
+  register: _gammu_smsd__gammu_log
+  check_mode: False
+  tags: ['gammu-smsd', 'gammu-smsd-configure']
+
+- name: Init gammu log file
+  file:
+    path:  "{{ gammu_smsd__instance.logfile|replace('%i', gammu_smsd__instance.name) }}"
+    owner: '{{ gammu_smsd__user }}'
+    group: '{{ gammu_smsd__group }}'
+    state: touch
+  when: gammu_smsd__instance.logfile is defined and (
+      not _gammu_smsd__gammu_log.stat.exists or 
+      (gammu_smsd__user is defined and _gammu_smsd__gammu_log.stat.pw_name != gammu_smsd__user ) or
+      (gammu_smsd__group is defined and _gammu_smsd__gammu_log.stat.gr_name != gammu_smsd__group )
+    )
+  tags: ['gammu-smsd', 'gammu-smsd-configure']
+
+#- name: Configure crontab jobs
+  #cron:
+    #name: 'GAMMU_SMSD-PHONE-MONITORING'
+    #minute: '*/10'
+    #job: '(date --rfc-3339=ns; /usr/bin/gammu-smsd-monitor --use-log -C --loops 1) > {{ gammu_smsd__var_dir }}/phones_status'
+    #user: '{{ gammu_smsd__user }}'
+    #cron_file: '{{ gammu_smsd__cron_file }}'
+    #state: "{{ 'present' if gammu_smsd__smsd_monitoring_cron else 'absent' }}"
+
+- name: Compute service status
+  set_fact:
+    _gammu_smsd__instance_service_status: "{{
+      'restarted' if _gammu_smsd__instance_device is changed or _gammu_smsd__instance_config is changed else
+      'started' }}"
+  tags: ['gammu-smsd', 'gammu-smsd-configure']
+
+- name: Ensure hostapd is started and enabled on boot
+  service:
+    name:    "{{ gammu_smsd__service_name|replace('%i', gammu_smsd__instance.name) }}"
+    enabled: "{{ gammu_smsd__service_enabled|bool if gammu_smsd__instance.state|d('present') == 'present' else False }}"
+    state:   "{{ (gammu_smsd__service_enabled|bool if gammu_smsd__instance.state|d('present') == 'present' else False)|ternary(_gammu_smsd__instance_service_status|d('started'), 'stopped') }}"
+  tags: ['gammu-smsd', 'gammu-smsd-configure', 'gammu-smsd-service']
+
+#- name: "Send a test SMS via gammu to {{ gammu_smsd__test_sms_number }}"
+  #become_user: '{{ gammu_smsd__user }}'
+  #shell: "echo '[Ansible] test message from {{ ansible_fqdn }} instane {{ gammu_smsd__instance.name }}' | gammu --config {{ gammu_smsd__gammu_file }} sendsms TEXT {{ gammu_smsd__test_sms_number }}"
+  #when: gammu_smsd__test_sms_number is defined and not gammu_smsd__service_enabled
+
+#- name: "Send a test SMS via gammu-smsd to {{ gammu_smsd__test_sms_number }}"
+  #become_user: '{{ gammu_smsd__user }}'
+  #shell: "echo '[Ansible] test message from {{ ansible_fqdn }}' | gammu-smsd-inject TEXT {{ gammu_smsd__test_sms_number }}"
+  #when: gammu_smsd__test_sms_number is defined and gammu_smsd__service_enabled

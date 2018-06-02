@@ -18,7 +18,7 @@
 - name: Run apt-backports
   include_role:
     name: apt-backports
-  when: ansible_distribution_release in ['jessie'] and gammu_smsd__packages_allow_backports|bool
+  when: ansible_os_family in ['Debian'] and gammu_smsd__packages_allow_backports|bool
   tags: ['gammu-smsd', 'gammu-smsd-install']
 
 - import_tasks: install.yml
@@ -29,6 +29,18 @@
 
 - import_tasks: service.yml
   tags: ['gammu-smsd', 'gammu-smsd-service']
+
+- include_tasks: instance.yml
+  vars:
+    gammu_smsd__instance: "{{ gammu_smsd__instance_defaults|combine(outer_item.value)|combine({'name': outer_item.key}) }}"
+  with_dict: '{{ gammu_smsd__instances }}'
+  loop_control:
+    loop_var: outer_item
+  tags: ['gammu-smsd', 'gammu-smsd-configure']
+
+- include_tasks: 'monitoring/monitoring-{{ gammu_smsd__monitoring }}.yml'
+  when: gammu_smsd__monitoring is defined
+  tags: ['gammu-smsd', 'gammu-smsd-monitoring']
 
 - include_tasks: facts.yml
   when: gammu_smsd__facts|bool

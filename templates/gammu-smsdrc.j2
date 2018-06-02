@@ -7,131 +7,131 @@
 ### Gammu library configuration, see gammurc(5)
 ###
 [gammu]
-Device = {{ gammu_smsd__gammu_device }}
-Connection = {{ gammu_smsd__gammu_connection }}
-{% if gammu_smsd__gammu_model is defined %}
-Model = {{ gammu_smsd__gammu_model }}
+Device = {{ gammu_smsd__instance.device }}
+Connection = {{ gammu_smsd__instance.connection }}
+{% if gammu_smsd__instance.model is defined %}
+Model = {{ gammu_smsd__instance.model }}
 {% endif %}
 
-Use_Locking =  {{ macros.gammubool(gammu_smsd__gammu_use_locking) }}
-SynchronizeTime = {{ macros.gammubool(gammu_smsd__gammu_synchronise_time) }}
-StartInfo = {{ macros.gammubool(gammu_smsd__gammu_start_info) }}
+Use_Locking =  {{ macros.gammubool(gammu_smsd__instance.use_locking) }}
+SynchronizeTime = {{ macros.gammubool(gammu_smsd__instance.synchronise_time) }}
+StartInfo = {{ macros.gammubool(gammu_smsd__instance.start_info) }}
 
 # Log
-LogFormat = {{ gammu_smsd__gammu_logformat }}
+LogFormat = {{ gammu_smsd__instance.logformat }}
 
 
 ###
 ### SMSD configuration, see gammu-smsdrc(5)
 ###
 [smsd]
-PhoneID = {{ gammu_smsd__phone_id }}
-{% if gammu_smsd__pincode is defined %}
-PIN = {{ gammu_smsd__pincode }}
+PhoneID = {{ gammu_smsd__instance.phone_id }}
+{% if gammu_smsd__instance.pincode is defined %}
+PIN = {{ gammu_smsd__instance.pincode }}
 {% endif %}
-{% if gammu_smsd__pincode is defined %}
-PhoneCode = {{ gammu_smsd__phonecode }}
+{% if gammu_smsd__instance.phonecode is defined %}
+PhoneCode = {{ gammu_smsd__instance.phonecode }}
 {% endif %}
 
 {% if gammu_smsd__version is version_compare('1.28.91', '>=') %}
-Send = {{ macros.bool(gammu_smsd__send) }}
-Receive = {{ macros.bool(gammu_smsd__receive) }}
+Send = {{ macros.bool(gammu_smsd__instance.send) }}
+Receive = {{ macros.bool(gammu_smsd__instance.receive) }}
 {% endif %}
 
 ### Log
-LogFile = {{ gammu_smsd__daemon_logfile }}
+LogFile = {{ gammu_smsd__instance.daemon_logfile|replace('%i', gammu_smsd__instance.name) }}
 {% if gammu_smsd__version is version_compare('1.30.91', '>=') %}
-LogFacility = {{ gammu_smsd__daemon_logfacility }}
+LogFacility = {{ gammu_smsd__instance.daemon_logfacility }}
 {% endif %}
-DebugLevel = {{ gammu_smsd__daemon_debuglevel|int }}
+DebugLevel = {{ gammu_smsd__instance.daemon_debuglevel|int }}
 
 
 ### GSM Network settings
-CommTimeout = {{ gammu_smsd__comm_timeout|int }}
-SendTimeout = {{ gammu_smsd__send_timeout|int }}
-MaxRetries = {{ gammu_smsd__max_retries|int }}
-RetryTimeout = {{ gammu_smsd__retry_timeout|int }}
-ReceiveFrequency = {{ gammu_smsd__receive_frequency|int }}
-MultipartTimeout = {{ gammu_smsd__multipart_timeout|int }}
-DeliveryReport = {{ gammu_smsd__delivery_report }}
-DeliveryReportDelay = {{ gammu_smsd__delivery_report_delay|int }}
-{% if gammu_smsd__smsc is defined and gammu_smsd__version is version_compare('1.36.2', '>=') %}
-SMSC = {{ gammu_smsd__smsc }}
+CommTimeout = {{ gammu_smsd__instance.comm_timeout|int }}
+SendTimeout = {{ gammu_smsd__instance.send_timeout|int }}
+MaxRetries = {{ gammu_smsd__instance.max_retries|int }}
+RetryTimeout = {{ gammu_smsd__instance.retry_timeout|int }}
+ReceiveFrequency = {{ gammu_smsd__instance.receive_frequency|int }}
+MultipartTimeout = {{ gammu_smsd__instance.multipart_timeout|int }}
+DeliveryReport = {{ gammu_smsd__instance.delivery_report }}
+DeliveryReportDelay = {{ gammu_smsd__instance.delivery_report_delay|int }}
+{% if gammu_smsd__instance.smsc is defined and gammu_smsd__version is version_compare('1.36.2', '>=') %}
+SMSC = {{ gammu_smsd__instance.smsc }}
 {% endif %}
 
 
 ### Hardware
-LoopSleep = {{ gammu_smsd__loop_sleep|int }}
-StatusFrequency = {{ gammu_smsd__status_frequency|int }}
-ResetFrequency = {{ gammu_smsd__softreset_frequency|int }}
+LoopSleep = {{ gammu_smsd__instance.loop_sleep|int }}
+StatusFrequency = {{ gammu_smsd__instance.status_frequency|int }}
+ResetFrequency = {{ gammu_smsd__instance.softreset_frequency|int }}
 {% if gammu_smsd__version is version_compare('1.28.92', '>=') %}
-HardResetFrequency = {{ gammu_smsd__hardreset_frequency|int }}
+HardResetFrequency = {{ gammu_smsd__instance.hardreset_frequency|int }}
 {% endif %}
 
-CheckSecurity = {{ macros.bool(gammu_smsd__check_security) }}
-CheckBattery = {{ macros.bool(gammu_smsd__check_battery) }}
-CheckSignal = {{ macros.bool(gammu_smsd__check_signal) }}
+CheckSecurity = {{ macros.bool(gammu_smsd__instance.check_security) }}
+CheckBattery = {{ macros.bool(gammu_smsd__instance.check_battery) }}
+CheckSignal = {{ macros.bool(gammu_smsd__instance.check_signal) }}
 {% if gammu_smsd__version is version_compare('1.37.90', '>=') %}
-CheckNetwork = {{ macros.bool(gammu_smsd__check_network) }}
+CheckNetwork = {{ macros.bool(gammu_smsd__instance.check_network) }}
 {% endif %}
 {% if gammu_smsd__version is version_compare('1.34.0', '>=') %}
-HangupCalls = {{ macros.bool(gammu_smsd__hangup_calls) }}
+HangupCalls = {{ macros.bool(gammu_smsd__instance.hangup_calls) }}
 {% endif %}
 
 
 ### Scripts
-{% if gammu_smsd__run_on_receive is defined %}
-RunOnReceive = {{ gammu_smsd__run_on_receive }}
+{% if gammu_smsd__instance.run_on_receive is defined %}
+RunOnReceive = {{ gammu_smsd__instance.run_on_receive }}
 {% endif %}
-{% if gammu_smsd__run_on_failure is defined and gammu_smsd__version is version_compare('1.28.93', '>=') %}
-RunOnFailure = {{ gammu_smsd__run_on_failure }}
+{% if gammu_smsd__instance.run_on_failure is defined and gammu_smsd__version is version_compare('1.28.93', '>=') %}
+RunOnFailure = {{ gammu_smsd__instance.run_on_failure }}
 {% endif %}
-{% if gammu_smsd__smsd_run_on__sent is defined and gammu_smsd__version is version_compare('1.36.4', '>=') %}
-RunOnSent = {{ gammu_smsd__smsd_run_on__sent }}
+{% if gammu_smsd__instance.run_on__sent is defined and gammu_smsd__version is version_compare('1.36.4', '>=') %}
+RunOnSent = {{ gammu_smsd__instance.run_on__sent }}
 {% endif %}
-{% if gammu_smsd__run_on_incoming_call is defined and gammu_smsd__version is version_compare('1.38.5', '>=') %}
-RunOnIncomingCall = {{ gammu_smsd__run_on_incoming_call }}
+{% if gammu_smsd__instance.run_on_incoming_call is defined and gammu_smsd__version is version_compare('1.38.5', '>=') %}
+RunOnIncomingCall = {{ gammu_smsd__instance.run_on_incoming_call }}
 {% endif %}
 
 
 ### Backend
-BackendRetries = {{ gammu_smsd__backend_retries|int }}
-Service = {{ gammu_smsd__service }}
+BackendRetries = {{ gammu_smsd__instance.backend_retries|int }}
+Service = {{ gammu_smsd__instance.service }}
 
-{% if gammu_smsd__service == 'FILES' %}
+{% if gammu_smsd__instance.service == 'FILES' %}
 ## Files backend
-InboxPath = {{ gammu_smsd__backend_files_inbox.rstrip('/') }}/
-OutboxPath = {{ gammu_smsd__backend_files_outbox.rstrip('/') }}/
-SentSMSPath = {{ gammu_smsd__backend_files_sent.rstrip('/') }}/
-ErrorSMSPath = {{ gammu_smsd__backend_files_error.rstrip('/') }}/
+InboxPath = {% if gammu_smsd__instance.backend_files_inbox[0] != '/' %}{{ _gammu_smsd__instance_var_directory }}/{% endif %}{{ gammu_smsd__instance.backend_files_inbox.rstrip('/') }}/
+OutboxPath = {% if gammu_smsd__instance.backend_files_inbox[0] != '/' %}{{ _gammu_smsd__instance_var_directory }}/{% endif %}{{ gammu_smsd__instance.backend_files_outbox.rstrip('/') }}/
+SentSMSPath = {% if gammu_smsd__instance.backend_files_inbox[0] != '/' %}{{ _gammu_smsd__instance_var_directory }}/{% endif %}{{ gammu_smsd__instance.backend_files_sent.rstrip('/') }}/
+ErrorSMSPath = {% if gammu_smsd__instance.backend_files_inbox[0] != '/' %}{{ _gammu_smsd__instance_var_directory }}/{% endif %}{{ gammu_smsd__instance.backend_files_error.rstrip('/') }}/
 
-InboxFormat = {{ gammu_smsd__backend_files_inbox_format }}
-OutboxFormat = {{ gammu_smsd__backend_files_outbox_format }}
-TransmitFormat = {{ gammu_smsd__backend_files_transmit_format }}
+InboxFormat = {{ gammu_smsd__instance.backend_files_inbox_format }}
+OutboxFormat = {{ gammu_smsd__instance.backend_files_outbox_format }}
+TransmitFormat = {{ gammu_smsd__instance.backend_files_transmit_format }}
 
-{% elif gammu_smsd__service == 'SQL' and gammu_smsd__version is version_compare('1.28.93', '>=') %}
+{% elif gammu_smsd__instance.service == 'SQL' and gammu_smsd__version is version_compare('1.28.93', '>=') %}
 ## SQL backend
-Driver = {{ gammu_smsd__backend_sql_driver }}
-{%   if gammu_smsd__backend_sql is defined %}
-SQL = {{ gammu_smsd__backend_sql }}
+Driver = {{ gammu_smsd__instance.backend_sql_driver }}
+{%   if gammu_smsd__instance.backend_sql is defined %}
+SQL = {{ gammu_smsd__instance.backend_sql }}
 {%   endif %}
-{%   if gammu_smsd__smsd_db_sql_user is defined %}
-User = {{ gammu_smsd__backend_sql_user }}
+{%   if gammu_smsd__instance.backend_sql_user is defined %}
+User = {{ gammu_smsd__instance.backend_sql_user }}
 {%   endif %}
-{%   if gammu_smsd__backend_sql_password is defined %}
-Password = {{ gammu_smsd__backend_sql_password }}
+{%   if gammu_smsd__instance.backend_sql_password is defined %}
+Password = {{ gammu_smsd__instance.backend_sql_password }}
 {%   endif %}
-{%   if gammu_smsd__backend_sql_host is defined %}
-Host = {{ gammu_smsd__backend_sql_host }}
+{%   if gammu_smsd__instance.backend_sql_host is defined %}
+Host = {{ gammu_smsd__instance.backend_sql_host }}
 {%   endif %}
-{%   if gammu_smsd__backend_sql_database is defined %}
-Database = {{ gammu_smsd__backend_sql_database }}
+{%   if gammu_smsd__instance.backend_sql_database is defined %}
+Database = {{ gammu_smsd__instance.backend_sql_database }}
 {%   endif %}
-{%   if gammu_smsd__backend_sql_driverpath is defined %}
-DriversPath = {{ gammu_smsd__backend_sql_driverpath }}
+{%   if gammu_smsd__instance.backend_sql_driverpath is defined %}
+DriversPath = {{ gammu_smsd__instance.backend_sql_driverpath }}
 {%   endif %}
-{%   if gammu_smsd__backend_sql_dbdir is defined %}
-DBDir = {{ gammu_smsd__backend_sql_dbdir }}
+{%   if gammu_smsd__instance.backend_sql_dbdir is defined %}
+DBDir = {{ gammu_smsd__instance.backend_sql_dbdir }}
 {%   endif %}
 {% else %}
 # Not implemented
