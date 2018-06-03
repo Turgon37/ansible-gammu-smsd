@@ -133,15 +133,6 @@
     )
   tags: ['gammu-smsd', 'gammu-smsd-configure']
 
-#- name: Configure crontab jobs
-  #cron:
-    #name: 'GAMMU_SMSD-PHONE-MONITORING'
-    #minute: '*/10'
-    #job: '(date --rfc-3339=ns; /usr/bin/gammu-smsd-monitor --use-log -C --loops 1) > {{ gammu_smsd__var_dir }}/phones_status'
-    #user: '{{ gammu_smsd__user }}'
-    #cron_file: '{{ gammu_smsd__cron_file }}'
-    #state: "{{ 'present' if gammu_smsd__smsd_monitoring_cron else 'absent' }}"
-
 - name: Compute service status
   set_fact:
     _gammu_smsd__instance_service_status: "{{
@@ -149,7 +140,7 @@
       'started' }}"
   tags: ['gammu-smsd', 'gammu-smsd-configure']
 
-- name: Ensure hostapd is started and enabled on boot
+- name: Ensure gammu-smsd instance is started and enabled on boot
   service:
     name:    "{{ gammu_smsd__service_name|replace('%i', gammu_smsd__instance.name) }}"
     enabled: "{{ gammu_smsd__service_enabled|bool if gammu_smsd__instance.state|d('present') == 'present' else False }}"
@@ -158,10 +149,17 @@
 
 #- name: "Send a test SMS via gammu to {{ gammu_smsd__test_sms_number }}"
   #become_user: '{{ gammu_smsd__user }}'
-  #shell: "echo '[Ansible] test message from {{ ansible_fqdn }} instane {{ gammu_smsd__instance.name }}' | gammu --config {{ gammu_smsd__gammu_file }} sendsms TEXT {{ gammu_smsd__test_sms_number }}"
+  #shell: "echo '[Ansible] test message from {{ ansible_fqdn }} instance {{ gammu_smsd__instance.name }}' | gammu --config {{ gammu_smsd__gammu_file }} sendsms TEXT {{ gammu_smsd__test_sms_number }}"
   #when: gammu_smsd__test_sms_number is defined and not gammu_smsd__service_enabled
 
-#- name: "Send a test SMS via gammu-smsd to {{ gammu_smsd__test_sms_number }}"
-  #become_user: '{{ gammu_smsd__user }}'
-  #shell: "echo '[Ansible] test message from {{ ansible_fqdn }}' | gammu-smsd-inject TEXT {{ gammu_smsd__test_sms_number }}"
-  #when: gammu_smsd__test_sms_number is defined and gammu_smsd__service_enabled
+- name: "Send a test SMS via gammu-smsd to {{ gammu_smsd__test_sms_number }}"
+  become_user: '{{ gammu_smsd__user }}'
+  shell: >
+    echo '[Ansible] test message from {{ ansible_fqdn }} for instance {{ gammu_smsd__instance.name }}'
+    | gammu-smsd-inject --config {{ gammu_smsd__configuration_file|replace('%i', gammu_smsd__instance.name) }} --use-log TEXT {{ gammu_smsd__test_sms_number }}
+  when: gammu_smsd__test_sms_number is defined and
+            (
+              (gammu_smsd__service_enabled|bool
+                  if gammu_smsd__instance.state|d('present') == 'present'
+                  else False)|ternary(_gammu_smsd__instance_service_status|d('started'), 'stopped')
+            ) == 'started'

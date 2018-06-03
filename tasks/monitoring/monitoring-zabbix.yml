@@ -13,5 +13,10 @@
           command: >
             /usr/bin/env python -c 'import json, sys; json.dump({"data": list(map(lambda x: {"{"+"#GAMMUSMSD_INSTANCE}": x}, {{ gammu_smsd__instances.keys()|list|to_json}} ))}, sys.stdout)'
           comment: return zabbix discovery item for gammu_smsd instances
+        - key: gammu_smsd.monitor[*]
+          command: >
+            /usr/bin/env gammu-smsd-monitor --config {{ gammu_smsd__configuration_file|replace('%i', '$1') }} --use-log --loops 1 --delay 0 | python -c 'import json, sys; json.dump(dict(map(lambda sl: (sl[0].strip().lower(), "".join(sl[1:]).strip()), map(lambda l: l.split(":"), filter(lambda l: l.strip(), sys.stdin.readlines())))), sys.stdout)'
+          sudo: true
+          sudo_user: '{{ gammu_smsd__user }}'
       state: present
   tags: ['gammu-smsd', 'gammu-smsd-monitoring']
