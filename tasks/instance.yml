@@ -82,7 +82,7 @@
     path:  "{% if gammu_smsd__instance[item][0] != '/' %}{{ _gammu_smsd__instance_var_directory }}/{% endif %}{{ gammu_smsd__instance[item] }}"
     owner: '{{ gammu_smsd__user }}'
     group: '{{ gammu_smsd__group }}'
-    mode:  '0770'
+    mode:  '2770'
     state: directory
   when: gammu_smsd__instance.service == 'FILES'
   with_items:
